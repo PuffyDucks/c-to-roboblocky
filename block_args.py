@@ -1,4 +1,4 @@
-block_data = {
+block_args = {
     "colour_picker": {
         "COLOUR": "field"
     },

@@ -1,16 +1,21 @@
 import xml.etree.ElementTree as ET
-import math
-import yaml 
-from pycparser import c_parser, c_ast
+from clang.cindex import Index, CursorKind, Config
 from datetime import datetime
 
-from block_data import block_data
+from block_args import block_args
+from function_data import block_names
 
-block_data_path = './block_data.py'
+c_file_path = '/home/luna/src/py-to-roboblocky/example.c'
 save_path = '/home/luna/Downloads'
 
+block_data_path = './block_data.py'
+
+Config.set_library_file("/usr/lib64/libclang.so.17.0.6")
+index = Index.create()
+tu = index.parse(c_file_path)
+
 def create_block(block_type, *args):
-    block_info = block_data.get(block_type)
+    block_info = block_args.get(block_type)
     if not block_info:
         raise ValueError(f"Block type '{block_type}' not found.")
     if not len(args) == len(block_info):
@@ -35,14 +40,43 @@ def attach_block(parent_block, child_block):
     element_next.append(child_block)
     return child_block
 
+def create_expr(node):
+    args = []
+    global current_block
+
+    for child in node.get_children():
+        tokens = list(child.get_tokens())
+        if child.kind == CursorKind.DECL_REF_EXPR:
+            print(f"Method called: {tokens[0].spelling}")  
+
+        if child.kind == CursorKind.MEMBER_REF_EXPR:
+            # TODO: function name as 1st arg if dropdown=true
+            print(f"Method called: {tokens[2].spelling}")
+            block_type = block_names[tokens[2].spelling]
+
+        if child.kind == CursorKind.INTEGER_LITERAL:
+            args.append(tokens[0].spelling)
+    
+    next_block = create_block(block_type, *args)
+    current_block = attach_block(current_block, next_block)
+
+def traverse_node(node):
+    if node.kind == CursorKind.CALL_EXPR:
+      create_expr(node)
+      return;
+
+    for child in node.get_children():
+        traverse_node(child)
 
 ### MAIN ###
 root = ET.Element('xml', xmlns='http://www.w3.org/1999/xhtml')
 current_block = create_block('draw_line', 'line', 1, 2, 3, 4)
 root.append(current_block)
 
-next_block = create_block('draw_line', 'line', 5, 6, 7, 8)
-current_block = attach_block(current_block, next_block)
+traverse_node(tu.cursor)
+
+# next_block = create_block('draw_line', 'line', 5, 6, 7, 8)
+# current_block = attach_block(current_block, next_block)
 
 #
 # check for:
