@@ -5,5 +5,5 @@ class block_data:
 
 block_names = {
     "line": block_data("draw_line", dropdown=True),
-    
+    "randInt": block_data("math_random_int")
 }

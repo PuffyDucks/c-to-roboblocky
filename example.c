@@ -1,7 +1,7 @@
 CPlot plot;
 
 int main() {
-    plot.line(0, 0, 4, 9);
-    plot.line(2, 5, 3, 1);
-    return 0;
+    // test
+    plot.line(randInt(-4, 3), 0, 4, 9);
+    line(2, 5+2+2+2+2*3/5, 3, 1);
 }

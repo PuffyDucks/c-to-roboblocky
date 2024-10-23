@@ -7,10 +7,10 @@ block_args = {
     },
     "draw_fill": {
         "TYPE": "field",
-        "VALUE_1": "value:colour_picker"
+        "VALUE_1": "value"
     },
     "draw_stroke_color": {
-        "color": "value:colour_picker"
+        "color": "value"
     },
     "draw_line_style": {
         "style": "field"
@@ -26,12 +26,25 @@ block_args = {
     },
     "draw_line": {
         "TYPE": "field",
-        "VALUE_1": "value:math_number",
-        "VALUE_2": "value:math_number",
-        "VALUE_3": "value:math_number",
-        "VALUE_4": "value:math_number"
+        "VALUE_1": "value",
+        "VALUE_2": "value",
+        "VALUE_3": "value",
+        "VALUE_4": "value"
     },
     "text_comment": {
         "TEXT": "field"
+    },
+    "math_arithmetic": {
+        "OP": "field",
+        "A": "value",
+        "B": "value"
+    },
+    "math_single": {
+        "OP": "field",
+        "NUM": "value"
+    },
+    "math_random_int": {
+        "FROM": "value",
+        "TO": "value"
     }
 }
