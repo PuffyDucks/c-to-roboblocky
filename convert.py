@@ -1,3 +1,12 @@
+# ADD:
+# loops
+# math
+# color
+# if statements
+# comparison
+# functions
+# arrays
+# lists
 import xml.etree.ElementTree as ET
 from clang.cindex import Index, CursorKind, Config
 from datetime import datetime
@@ -5,7 +14,7 @@ from datetime import datetime
 from block_args import block_args
 from function_data import block_names
 
-c_file_path = '/home/luna/src/py-to-roboblocky/example.c'
+c_file_path = '/home/luna/src/c-to-roboblocky/example.c'
 save_path = '/home/luna/Downloads'
 
 block_data_path = './block_data.py'
@@ -14,7 +23,52 @@ Config.set_library_file("/usr/lib64/libclang.so.17.0.6")
 index = Index.create()
 tu = index.parse(c_file_path)
 
-def create_block(block_type, *args):
+def attach_block(parent_block, child_block):
+    element_next = ET.SubElement(parent_block, 'next')
+    element_next.append(child_block)
+    return child_block
+
+def traverse_node(node):
+    global current_block
+    next_block = build_block(node)
+
+    if next_block is not None:
+        current_block = attach_block(current_block, next_block)
+    else:
+        for child in node.get_children():
+            traverse_node(child)
+    
+# searches node.kind to determine what function to build with
+def build_block(node):
+    tokens = list(node.get_tokens())
+    match node.kind:
+        case CursorKind.INTEGER_LITERAL:
+            return build_block_xml('math_number', tokens[0].spelling)
+        case CursorKind.CALL_EXPR:
+            return build_expression(node)
+        case _:
+            return None
+
+# creates function block from expression
+def build_expression(node):
+    args = []
+    block_type = None
+
+    for child in node.get_children():
+        if child.kind == CursorKind.MEMBER_REF_EXPR:
+            tokens = list(child.get_tokens())
+            block_data = block_names[tokens[2].spelling]
+            block_type = block_data.type
+            if block_data.dropdown:
+                args.append(tokens[2].spelling)
+            print(f"Method called: {tokens[2].spelling}")
+        else:
+            args.append(build_block(child))    
+
+    return build_block_xml(block_type, *args)
+
+# args is list of nodes
+def build_block_xml(block_type, *args):
     block_info = block_args.get(block_type)
     if not block_info:
         raise ValueError(f"Block type '{block_type}' not found.")
@@ -25,58 +79,19 @@ def create_block(block_type, *args):
 
     for (key, arg_type), arg_value in zip(block_info.items(), args):
         if arg_type == "field":
-            field_elem = ET.SubElement(block, 'field', name=key)
-            field_elem.text = str(arg_value)
-
+            field_element = ET.SubElement(block, 'field', name=key)
+            field_element.text = str(arg_value)
         elif arg_type.startswith("value:"):
             value_block_type = arg_type.split(":")[1]
-            value_elem = ET.SubElement(block, 'value', name=key)
-            value_elem.append(create_block(value_block_type, arg_value))
-
+            value_element = ET.SubElement(block, 'value', name=key)
+            value_element.append(arg_value)
     return block
-
-def attach_block(parent_block, child_block):
-    element_next = ET.SubElement(parent_block, 'next')
-    element_next.append(child_block)
-    return child_block
-
-def create_expr(node):
-    args = []
-    global current_block
-
-    for child in node.get_children():
-        tokens = list(child.get_tokens())
-        if child.kind == CursorKind.DECL_REF_EXPR:
-            print(f"Method called: {tokens[0].spelling}")  
-
-        if child.kind == CursorKind.MEMBER_REF_EXPR:
-            # TODO: function name as 1st arg if dropdown=true
-            print(f"Method called: {tokens[2].spelling}")
-            block_type = block_names[tokens[2].spelling]
-
-        if child.kind == CursorKind.INTEGER_LITERAL:
-            args.append(tokens[0].spelling)
-    
-    next_block = create_block(block_type, *args)
-    current_block = attach_block(current_block, next_block)
-
-def traverse_node(node):
-    if node.kind == CursorKind.CALL_EXPR:
-      create_expr(node)
-      return;
-
-    for child in node.get_children():
-        traverse_node(child)
 
 ### MAIN ###
 root = ET.Element('xml', xmlns='http://www.w3.org/1999/xhtml')
-current_block = create_block('draw_line', 'line', 1, 2, 3, 4)
+current_block = build_block_xml('text_comment', 'Generated with Luna\'s C-to-RoboBlocky transpiler v0.1')
 root.append(current_block)
-
 traverse_node(tu.cursor)
-
-# next_block = create_block('draw_line', 'line', 5, 6, 7, 8)
-# current_block = attach_block(current_block, next_block)
 
 #
 # check for:

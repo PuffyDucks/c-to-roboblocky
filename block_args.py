@@ -30,5 +30,8 @@ block_args = {
         "VALUE_2": "value:math_number",
         "VALUE_3": "value:math_number",
         "VALUE_4": "value:math_number"
+    },
+    "text_comment": {
+        "TEXT": "field"
     }
 }

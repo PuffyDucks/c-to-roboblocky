@@ -7,7 +7,7 @@ clang.cindex.Config.set_library_file('/usr/lib64/libclang.so.17.0.6')
 index = clang.cindex.Index.create()
 
 # Parse the C file
-tu = index.parse('example.c')
+tu = index.parse('/home/luna/src/c-to-roboblocky/example.c')
 
 # Walk through the AST and print nodes
 def print_ast(node, indent=0):
