@@ -8,6 +8,8 @@
 # variables
 # arrays
 # lists
+# results 
+# prompts
 import xml.etree.ElementTree as ET
 from clang.cindex import Index, CursorKind, Config
 from datetime import datetime
@@ -15,23 +17,23 @@ from datetime import datetime
 from block_args import block_args
 from function_data import block_names
 
-c_file_path = '/home/luna/src/c-to-roboblocky/example.c'
+c_file_path = '/home/luna/src/barobo/c-to-blocks/example.c'
 save_path = '/home/luna/Downloads'
 
-block_data_path = './block_data.py'
-
-Config.set_library_file("/usr/lib64/libclang.so.17.0.6")
+Config.set_library_file('/usr/lib64/libclang.so.19.1.5')
 index = Index.create()
 tu = index.parse(c_file_path)
 
 def attach_block(parent_block, child_block):
+    """Attaches child block to parent block, and returns child block."""
     element_next = ET.SubElement(parent_block, 'next')
     element_next.append(child_block)
     return child_block
 
 def traverse_node(node):
+    """Recursively traverses through node."""
     global current_block
-    next_block = build_block(node)
+    next_block = node_to_block(node)
 
     if next_block is not None:
         current_block = attach_block(current_block, next_block)
@@ -39,12 +41,13 @@ def traverse_node(node):
         for child in node.get_children():
             traverse_node(child)
     
-# searches node.kind to determine what function to build with
-def build_block(node):
+def node_to_block(node):
+    """Searches node.kind to determine what function to build with"""
     tokens = list(node.get_tokens())
+    print(f'{node.kind} {node.spelling}')
     match node.kind:
         case CursorKind.INTEGER_LITERAL:
-            return build_block_xml('math_number', tokens[0].spelling)
+            return build_block('math_number', tokens[0].spelling)
         case CursorKind.CALL_EXPR:
             return build_expression(node)
         case CursorKind.BINARY_OPERATOR:
@@ -52,13 +55,14 @@ def build_block(node):
         case _:
             return None
 
-# creates function block from expression
 def build_expression(node):
+    """Creates block from expression node"""
     args = []
     block_type = None
 
     for child in node.get_children():
         tokens = list(child.get_tokens())
+        print(f'       {child.kind}   {child.spelling}')
         if child.kind == CursorKind.MEMBER_REF_EXPR:
             block_data = block_names[tokens[2].spelling]
             block_type = block_data.type
@@ -71,21 +75,22 @@ def build_expression(node):
                 args.append(tokens[0].spelling)
             print(f"Method called: {tokens[0].spelling}")
         else:
-            args.append(build_block(child))    
+            args.append(node_to_block(child))    
 
-    return build_block_xml(block_type, *args)
+    return build_block(block_type, *args)
 
 def build_binary_operator(node):
+    """Creates block from binary operator node"""
     arithmetic_operators = {"+": "ADD", "-": "MINUS", "*": "MULTIPLY", "/": "DIVIDE"}
     operator = list(node.get_tokens())[1].spelling
-    operands = [build_block(operand) for operand in node.get_children()]
+    operands = [node_to_block(operand) for operand in node.get_children()]
     
     if operator in arithmetic_operators:
-        return build_block_xml('math_arithmetic', arithmetic_operators[operator], operands[0], operands[1])
+        return build_block('math_arithmetic', arithmetic_operators[operator], operands[0], operands[1])
     raise ValueError("TODO: add other binary operators")
 
 # args is list of nodes
-def build_block_xml(block_type, *args):
+def build_block(block_type, *args):
     block_info = block_args.get(block_type)
     if not block_info:
         raise ValueError(f"Block type '{block_type}' not found.")
@@ -107,7 +112,7 @@ def build_block_xml(block_type, *args):
 
 ### MAIN ###
 root = ET.Element('xml', xmlns='http://www.w3.org/1999/xhtml')
-current_block = build_block_xml('text_comment', 'Generated with Luna\'s C-to-RoboBlocky transpiler v0.1')
+current_block = build_block('text_comment', 'Generated with Luna\'s C-to-RoboBlocky transpiler v0.1')
 root.append(current_block)
 traverse_node(tu.cursor)
 

@@ -1,7 +1,19 @@
+#include <stdbool.h>
+
 CPlot plot;
 
 int main() {
-    // test
-    plot.line(randInt(-4, 3), 0, 4, 9);
-    line(2, 5+2+2+2+2*3/5, 3, 1);
+    plot.line(2, 4+5, 5-2, 4*5/9-5*9);
+    // plot.line(4, 4-5, 5*2, 4+5-9*5/9);
+
+    // if (true) {
+    //     0;
+    // }
+    // if (false) {
+    //     0;
+    // } else if (true) {
+    //     0;
+    // } else {
+    //     0;
+    // }
 }
