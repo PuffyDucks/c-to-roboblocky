@@ -52,39 +52,22 @@ class Block(ET.Element):
     @staticmethod
     def from_node(node):
         """Builds and returns block from ast node."""
-        tokens = list(node.get_tokens())
         # print(f'{node.kind} {node.spelling}')
-        
-        match node.kind:
-            case CursorKind.FUNCTION_DECL:
-                return Block.build_function_decl(node)
-            case CursorKind.COMPOUND_STMT:
-                return Block.build_compound_stmt(node)
-            case CursorKind.PAREN_EXPR:
-                child = list(node.get_children())[0]
-                return Block.from_node(child)
-            case CursorKind.INTEGER_LITERAL:
-                return Block('math_number', tokens[0].spelling)
-            case CursorKind.CALL_EXPR:
-                return Block.build_expression(node)
-            case CursorKind.BINARY_OPERATOR:
-                return Block.build_binary_operator(node)
-            case CursorKind.WHILE_STMT:
-                return Block.build_while_stmt(node)
-            case _:
-                return None
-            
-    def build_compound_stmt(node):
-        top = None
-        bottom = None
+        cursor_kind_map = {
+            CursorKind.FUNCTION_DECL: Block.build_function_decl,
+            CursorKind.COMPOUND_STMT: Block.build_compound_stmt,
+            CursorKind.PAREN_EXPR: Block.build_paren_expr,
+            CursorKind.CALL_EXPR: Block.build_expression,
+            CursorKind.BINARY_OPERATOR: Block.build_binary_operator,
+            CursorKind.INTEGER_LITERAL: Block.build_integer_literal,
+            CursorKind.WHILE_STMT: Block.build_while_stmt,
+        }
 
-        for child in node.get_children():
-            new_block = Block.from_node(child)
-            if top is None: top = new_block
-            bottom = bottom.attach_next(new_block) if bottom is not None else new_block
-        
-        return top
-    
+        if cursor_kind_map.get(node.kind):
+            return cursor_kind_map.get(node.kind)(node)
+                    
+        return None
+
     def build_function_decl(node):
         if node.spelling != 'main':
             raise NotImplementedError(f'Could not build function \"{node.spelling}\". Need to implement adding functions other than main')
@@ -96,7 +79,21 @@ class Block(ET.Element):
                 main.attach_next(Block.from_node(child))
 
         return main
+      
+    def build_compound_stmt(node):
+        top = None
+        bottom = None
 
+        for child in node.get_children():
+            new_block = Block.from_node(child)
+            if top is None: top = new_block
+            bottom = bottom.attach_next(new_block) if bottom is not None else new_block
+        
+        return top
+
+    def build_paren_expr(node):
+        child = list(node.get_children())[0]
+        return Block.from_node(child)
 
     def build_expression(node):
         """Creates block from expression node"""
@@ -144,6 +141,10 @@ class Block(ET.Element):
         elif node.spelling in logical_map:
             return Block('logic_operation', logical_map[node.spelling], operands[0], operands[1])
         raise NotImplementedError(f"Binary operator {node.spelling} not implemented.")
+
+    def build_integer_literal(node):
+        tokens = list(node.get_tokens())
+        return Block('math_number', tokens[0].spelling)
 
     def build_while_stmt(node):
         children = [Block.from_node(child) for child in node.get_children()]
