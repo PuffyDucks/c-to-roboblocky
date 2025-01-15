@@ -1,3 +1,10 @@
+# loops
+
+controls_whileUntil:
+  MODE: "field"
+  BOOL: "value"
+  DO: "statement"
+
 # binary operators
 
 math_arithmetic:
@@ -16,6 +23,7 @@ logic_operation:
   B: "value"
 
 # variables
+
 variables_set:
   VAR: "field"
   VALUE: "value"

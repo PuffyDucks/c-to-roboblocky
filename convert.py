@@ -42,15 +42,12 @@ class Block(ET.Element):
         # create xml element of type 'block'
         super().__init__('block', type=str_block_type)
         
-        for (name, arg_type), arg_value in zip(block_info.items(), args):
+        for (arg_name, arg_type), arg_value in zip(block_info.items(), args):
+            arg_element = ET.SubElement(self, arg_type, name=arg_name)
             if arg_type == "field":
-                field_element = ET.SubElement(self, 'field', name=name)
-                field_element.text = str(arg_value)
-            elif arg_type == "value":
-                value_element = ET.SubElement(self, 'value', name=name)
-                value_element.append(arg_value)
+                arg_element.text = str(arg_value)
             else:
-                raise TypeError(f"Argument type '{arg_type}' unknown.")
+                arg_element.append(arg_value)
     
     @staticmethod
     def from_node(node):
@@ -64,7 +61,6 @@ class Block(ET.Element):
             case CursorKind.COMPOUND_STMT:
                 return Block.build_compound_stmt(node)
             case CursorKind.PAREN_EXPR:
-                # TODO: make separate function
                 child = list(node.get_children())[0]
                 return Block.from_node(child)
             case CursorKind.INTEGER_LITERAL:
@@ -73,6 +69,8 @@ class Block(ET.Element):
                 return Block.build_expression(node)
             case CursorKind.BINARY_OPERATOR:
                 return Block.build_binary_operator(node)
+            case CursorKind.WHILE_STMT:
+                return Block.build_while_stmt(node)
             case _:
                 return None
             
@@ -146,6 +144,10 @@ class Block(ET.Element):
         elif node.spelling in logical_map:
             return Block('logic_operation', logical_map[node.spelling], operands[0], operands[1])
         raise NotImplementedError(f"Binary operator {node.spelling} not implemented.")
+
+    def build_while_stmt(node):
+        children = [Block.from_node(child) for child in node.get_children()]
+        return Block('controls_whileUntil', 'WHILE', children[0], children[1])
 
     def attach_next(self, child_block):
         """
