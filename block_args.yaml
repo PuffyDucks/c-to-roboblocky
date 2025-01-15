@@ -1,0 +1,47 @@
+colour_picker:
+  COLOUR: "field"
+
+math_number:
+  NUM: "field"
+
+draw_fill:
+  TYPE: "field"
+  VALUE_1: "value"
+
+draw_stroke_color:
+  color: "value"
+
+draw_line_style:
+  style: "field"
+
+array_split_with_type:
+  TYPE: "field"
+  VAR: "field"
+  TEXT: "field"
+
+draw_polygon:
+  VARX: "field"
+  VARY: "field"
+
+draw_line:
+  TYPE: "field"
+  VALUE_1: "value"
+  VALUE_2: "value"
+  VALUE_3: "value"
+  VALUE_4: "value"
+
+text_comment:
+  TEXT: "field"
+
+math_arithmetic:
+  OP: "field"
+  A: "value"
+  B: "value"
+
+math_single:
+  OP: "field"
+  NUM: "value"
+
+math_random_int:
+  FROM: "value"
+  TO: "value"

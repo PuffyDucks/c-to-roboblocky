@@ -8,12 +8,13 @@
 # variables
 # arrays
 # lists
-# results 
+# results
 # prompts
+# error checking for +=
 import xml.etree.ElementTree as ET
 from clang.cindex import Index, CursorKind, Config
+import yaml
 
-from block_args import block_args
 from function_data import block_names
 
 c_file_path = '/home/luna/src/barobo/c-to-blocks/example.c'
@@ -24,9 +25,12 @@ index = Index.create()
 tu = index.parse(c_file_path)
 
 class Block(ET.Element):
+    with open('./block_args.yaml', 'r') as file:
+        args = yaml.safe_load(file)
+
     # *args is list of nodes
     def __init__(self, str_block_type, *args):
-        block_info = block_args.get(str_block_type)
+        block_info = Block.args.get(str_block_type)
 
         if not block_info:
             raise ValueError(f"Block type '{str_block_type}' not found.")
