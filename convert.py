@@ -11,6 +11,7 @@
 # results
 # prompts
 # error checking for +=
+# mod, ++ --
 import xml.etree.ElementTree as ET
 from clang.cindex import Index, CursorKind, Config
 import yaml
@@ -28,7 +29,8 @@ class Block(ET.Element):
     with open('./block_args.yaml', 'r') as file:
         args = yaml.safe_load(file)
 
-    # *args is list of nodes
+    # *args is list of strings and blocks
+    # TODO: typecheck *args and check if string or block matches with field or value
     def __init__(self, str_block_type, *args):
         block_info = Block.args.get(str_block_type)
 
@@ -37,14 +39,15 @@ class Block(ET.Element):
         if len(args) != len(block_info):
             raise TypeError(f"'{str_block_type}'() takes {len(block_info)} argument{'s' if len(block_info) > 1 else ''}, but recieved {len(args)}.")
 
+        # create xml element of type 'block'
         super().__init__('block', type=str_block_type)
         
-        for (key, arg_type), arg_value in zip(block_info.items(), args):
+        for (name, arg_type), arg_value in zip(block_info.items(), args):
             if arg_type == "field":
-                field_element = ET.SubElement(self, 'field', name=key)
+                field_element = ET.SubElement(self, 'field', name=name)
                 field_element.text = str(arg_value)
             elif arg_type == "value":
-                value_element = ET.SubElement(self, 'value', name=key)
+                value_element = ET.SubElement(self, 'value', name=name)
                 value_element.append(arg_value)
             else:
                 raise TypeError(f"Argument type '{arg_type}' unknown.")
@@ -60,6 +63,10 @@ class Block(ET.Element):
                 return Block.build_function_decl(node)
             case CursorKind.COMPOUND_STMT:
                 return Block.build_compound_stmt(node)
+            case CursorKind.PAREN_EXPR:
+                # TODO: make separate function
+                child = list(node.get_children())[0]
+                return Block.from_node(child)
             case CursorKind.INTEGER_LITERAL:
                 return Block('math_number', tokens[0].spelling)
             case CursorKind.CALL_EXPR:
@@ -116,14 +123,29 @@ class Block(ET.Element):
 
         return Block(block_type, *args)
 
+    def build_unary_operator(node):
+        raise NotImplementedError("Unary operators not implemented.")
+
     def build_binary_operator(node):
         """Creates block from binary operator node"""
-        operator_map = {'+': 'ADD', '-': 'MINUS', '*': 'MULTIPLY', '/': 'DIVIDE'}
+        arithmetic_map = {'+': 'ADD', '-': 'MINUS', '*': 'MULTIPLY', '/': 'DIVIDE'}
+        comparison_map = {'==': 'EQ', '!=': 'NEQ', '<': 'LT', '<=': 'LTE', '>': 'GT', '>=': 'GTE'}
+        logical_map = {'&&': 'AND', '||': 'OR'}
+
+        # TODO: variable assignment
+        if node.spelling == '=':
+            children = list(node.get_children())
+            return Block('variables_set', children[0].spelling, Block.from_node(children[1]))
+        
         operands = [Block.from_node(operand) for operand in node.get_children()]
 
-        if node.spelling in operator_map:
-            return Block('math_arithmetic', operator_map[node.spelling], operands[0], operands[1])
-        raise NotImplementedError("Add other binary operators")
+        if node.spelling in arithmetic_map:
+            return Block('math_arithmetic', arithmetic_map[node.spelling], operands[0], operands[1])
+        elif node.spelling in comparison_map:
+            return Block('logic_compare', comparison_map[node.spelling], operands[0], operands[1])
+        elif node.spelling in logical_map:
+            return Block('logic_operation', logical_map[node.spelling], operands[0], operands[1])
+        raise NotImplementedError(f"Binary operator {node.spelling} not implemented.")
 
     def attach_next(self, child_block):
         """
@@ -148,7 +170,6 @@ def from_tu(node):
         if child.kind == CursorKind.FUNCTION_DECL:
             root.append(Block.build_function_decl(child))
 
-    ### Saving XML tree as file ### 
     root.insert(0, ET.Comment(" RoboBlockly hash lines color: #FFFFFF "))
     root.insert(0, ET.Comment(" RoboBlockly tics lines color: #FFFFFF "))
     root.insert(0, ET.Comment(" RoboBlockly background color: #FFFFFF "))

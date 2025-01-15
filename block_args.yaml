@@ -1,3 +1,25 @@
+# binary operators
+
+math_arithmetic:
+  OP: "field"
+  A: "value"
+  B: "value"
+  
+logic_compare:
+  OP: "field"
+  A: "value"
+  B: "value"
+
+logic_operation:
+  OP: "field"
+  A: "value"
+  B: "value"
+
+# variables
+variables_set:
+  VAR: "field"
+  VALUE: "value"
+
 colour_picker:
   COLOUR: "field"
 
@@ -32,11 +54,6 @@ draw_line:
 
 text_comment:
   TEXT: "field"
-
-math_arithmetic:
-  OP: "field"
-  A: "value"
-  B: "value"
 
 math_single:
   OP: "field"
