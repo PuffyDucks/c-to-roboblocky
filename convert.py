@@ -58,6 +58,7 @@ class Block(ET.Element):
             CursorKind.COMPOUND_STMT: Block.build_compound_stmt,
             CursorKind.PAREN_EXPR: Block.build_paren_expr,
             CursorKind.CALL_EXPR: Block.build_expression,
+            CursorKind.UNARY_OPERATOR: Block.build_unary_operator,
             CursorKind.BINARY_OPERATOR: Block.build_binary_operator,
             CursorKind.INTEGER_LITERAL: Block.build_integer_literal,
             CursorKind.WHILE_STMT: Block.build_while_stmt,
@@ -119,7 +120,13 @@ class Block(ET.Element):
         return Block(block_type, *args)
 
     def build_unary_operator(node):
-        raise NotImplementedError("Unary operators not implemented.")
+        token = list(node.get_tokens())[0]
+        child = list(node.get_children())[0]
+        if token.spelling == '!':
+            return Block('logic_negate', Block.from_node(child))
+        elif token.spelling == '-':
+            return Block('math_negative', Block.from_node(child))
+        raise NotImplementedError(f"Unary operator {token.spelling} is not supported.")
 
     def build_binary_operator(node):
         """Creates block from binary operator node"""

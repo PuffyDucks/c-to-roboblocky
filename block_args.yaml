@@ -5,6 +5,13 @@ controls_whileUntil:
   BOOL: "value"
   DO: "statement"
 
+# unary operators
+logic_negate:
+  BOOL: "value"
+
+math_negative:
+  NUM: "value"
+
 # binary operators
 
 math_arithmetic:
