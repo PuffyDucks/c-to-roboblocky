@@ -65,7 +65,8 @@ class Block(ET.Element):
 
             CursorKind.UNARY_OPERATOR: Block.build_unary_operator,
             CursorKind.BINARY_OPERATOR: Block.build_binary_operator,
-            CursorKind.INTEGER_LITERAL: Block.build_integer_literal,
+            CursorKind.INTEGER_LITERAL: Block.build_number_literal,
+            CursorKind.FLOATING_LITERAL: Block.build_number_literal,
             CursorKind.WHILE_STMT: Block.build_while_stmt
         }
 
@@ -158,8 +159,8 @@ class Block(ET.Element):
             return Block('logic_operation', logical_map[node.spelling], operands[0], operands[1])
         raise NotImplementedError(f"Binary operator {node.spelling} is not supported.")
 
-    def build_integer_literal(node):
-        """Creates block from integer literal node"""
+    def build_number_literal(node):
+        """Creates block from integer or floating literal node"""
         tokens = list(node.get_tokens())
         return Block('math_number', tokens[0].spelling)
 

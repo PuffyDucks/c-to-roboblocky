@@ -8,7 +8,7 @@ CPlot plot;
 int main() {
 
     int a = 3;
-    int foo, bar, foobar = a, test = 9;
+    double foo, bar, foobar = a, test = 9;
     int b = 3 + 3;
     foo = foo + 1;
     plot.line(foo, 0, 4, 9);
