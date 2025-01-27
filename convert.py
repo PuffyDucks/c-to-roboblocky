@@ -1,11 +1,9 @@
 # ADD:
 # loops
-# negative numbers
 # color
+# strings
 # if statements
-# comparison
 # functions
-# variables
 # arrays
 # lists
 # results
@@ -41,6 +39,7 @@ class Block(ET.Element):
 
         # create xml element of type 'block'
         super().__init__('block', type=str_block_type)
+        self.stack_bottom = self
         
         for (arg_name, arg_type), arg_value in zip(block_info.items(), args):
             arg_element = ET.SubElement(self, arg_type, name=arg_name)
@@ -52,16 +51,22 @@ class Block(ET.Element):
     @staticmethod
     def from_node(node):
         """Builds and returns block from ast node."""
-        # print(f'{node.kind} {node.spelling}')
+        print(f'{node.kind} {node.spelling}')
         cursor_kind_map = {
             CursorKind.FUNCTION_DECL: Block.build_function_decl,
+            
             CursorKind.COMPOUND_STMT: Block.build_compound_stmt,
             CursorKind.PAREN_EXPR: Block.build_paren_expr,
             CursorKind.CALL_EXPR: Block.build_expression,
+            CursorKind.DECL_REF_EXPR: Block.build_decl_ref_expr,
+            CursorKind.UNEXPOSED_EXPR: Block.build_unexposed_expr,
+
+            CursorKind.DECL_STMT: Block.build_decl_stmt,
+
             CursorKind.UNARY_OPERATOR: Block.build_unary_operator,
             CursorKind.BINARY_OPERATOR: Block.build_binary_operator,
             CursorKind.INTEGER_LITERAL: Block.build_integer_literal,
-            CursorKind.WHILE_STMT: Block.build_while_stmt,
+            CursorKind.WHILE_STMT: Block.build_while_stmt
         }
 
         if cursor_kind_map.get(node.kind):
@@ -77,7 +82,7 @@ class Block(ET.Element):
 
         for child in node.get_children():
             if child.kind == CursorKind.COMPOUND_STMT:
-                main.attach_next(Block.from_node(child))
+                main.attach(Block.from_node(child))
 
         return main
       
@@ -88,8 +93,9 @@ class Block(ET.Element):
         for child in node.get_children():
             new_block = Block.from_node(child)
             if top is None: top = new_block
-            bottom = bottom.attach_next(new_block) if bottom is not None else new_block
+            bottom = bottom.attach(new_block) if bottom is not None else new_block.stack_bottom
         
+        top.stack_bottom = bottom
         return top
 
     def build_paren_expr(node):
@@ -101,6 +107,7 @@ class Block(ET.Element):
         args = []
         block_type = None
 
+        # TODO: make the token not hard coded
         for child in node.get_children():
             tokens = list(child.get_tokens())
             if child.kind == CursorKind.MEMBER_REF_EXPR:
@@ -122,6 +129,8 @@ class Block(ET.Element):
     def build_unary_operator(node):
         token = list(node.get_tokens())[0]
         child = list(node.get_children())[0]
+
+        # TODO: use math_change to implement ++, --, +=, -=
         if token.spelling == '!':
             return Block('logic_negate', Block.from_node(child))
         elif token.spelling == '-':
@@ -134,7 +143,7 @@ class Block(ET.Element):
         comparison_map = {'==': 'EQ', '!=': 'NEQ', '<': 'LT', '<=': 'LTE', '>': 'GT', '>=': 'GTE'}
         logical_map = {'&&': 'AND', '||': 'OR'}
 
-        # TODO: variable assignment
+        # variable assignment
         if node.spelling == '=':
             children = list(node.get_children())
             return Block('variables_set', children[0].spelling, Block.from_node(children[1]))
@@ -147,17 +156,54 @@ class Block(ET.Element):
             return Block('logic_compare', comparison_map[node.spelling], operands[0], operands[1])
         elif node.spelling in logical_map:
             return Block('logic_operation', logical_map[node.spelling], operands[0], operands[1])
-        raise NotImplementedError(f"Binary operator {node.spelling} not implemented.")
+        raise NotImplementedError(f"Binary operator {node.spelling} is not supported.")
 
     def build_integer_literal(node):
+        """Creates block from integer literal node"""
         tokens = list(node.get_tokens())
         return Block('math_number', tokens[0].spelling)
 
     def build_while_stmt(node):
+        """Creates block from while statement node"""
         children = [Block.from_node(child) for child in node.get_children()]
         return Block('controls_whileUntil', 'WHILE', children[0], children[1])
+    
+    def build_decl_ref_expr(node):
+        referenced = node.referenced
+        if referenced.kind == CursorKind.VAR_DECL:
+            return Block('variables_get', referenced.spelling)
+        else:
+            raise NotImplementedError(f"Declaration to {referenced.kind} is not supported.")
 
-    def attach_next(self, child_block):
+    def build_unexposed_expr(node):
+        child = list(node.get_children())[0]
+        return Block.from_node(child)
+
+    def build_var_decl(node):
+        """Creates block from variable declaration node"""
+        children = list(node.get_children())
+        if children: 
+            return Block('variables_set_with_type', node.type.spelling, node.spelling, Block.from_node(children[0]))
+        else: 
+            return Block('variables_create_with_type', node.type.spelling, node.spelling)
+
+    def build_decl_stmt(node):
+        children = list(node.get_children())
+        top = None
+        bottom = None
+
+        for child in children:
+            if (child.kind != CursorKind.VAR_DECL):
+                raise NotImplementedError(f"Declaration to {child.kind} is not supported.")
+            
+            new_block = Block.build_var_decl(child)
+            if top is None: top = new_block
+            bottom = bottom.attach(new_block) if bottom is not None else new_block.stack_bottom
+        
+        top.stack_bottom = bottom
+        return top
+
+    def attach(self, child_block):
         """
         Appends child block wrapped in 'next' element. Returns bottom block.
 
@@ -168,7 +214,7 @@ class Block(ET.Element):
 
         element_next = ET.SubElement(self, 'next')
         element_next.append(child_block)
-        return child_block
+        return child_block.stack_bottom
     
 def from_tu(node):
     """

@@ -31,15 +31,46 @@ logic_operation:
 
 # variables
 
+variables_create_with_type:
+  type: "field"
+  VAR: "field"
+
+variables_set_with_type:
+  type: "field"
+  VAR: "field"
+  VALUE: "value"
+
 variables_set:
   VAR: "field"
   VALUE: "value"
 
-colour_picker:
-  COLOUR: "field"
+variables_get:
+  VAR: "field"
+
+# arrays
+
+array_split_with_type:
+  TYPE: "field"
+  VAR: "field"
+  TEXT: "field"
+
+# math
 
 math_number:
   NUM: "field"
+
+math_single:
+  OP: "field"
+  NUM: "value"
+
+math_random_int:
+  FROM: "value"
+  TO: "value"
+
+# drawing
+
+colour_picker:
+  COLOUR: "field"
 
 draw_fill:
   TYPE: "field"
@@ -50,11 +81,6 @@ draw_stroke_color:
 
 draw_line_style:
   style: "field"
-
-array_split_with_type:
-  TYPE: "field"
-  VAR: "field"
-  TEXT: "field"
 
 draw_polygon:
   VARX: "field"
@@ -67,13 +93,7 @@ draw_line:
   VALUE_3: "value"
   VALUE_4: "value"
 
+# text
+
 text_comment:
   TEXT: "field"
-
-math_single:
-  OP: "field"
-  NUM: "value"
-
-math_random_int:
-  FROM: "value"
-  TO: "value"
