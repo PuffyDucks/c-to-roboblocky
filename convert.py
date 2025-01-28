@@ -14,8 +14,6 @@ import xml.etree.ElementTree as ET
 from clang.cindex import Index, CursorKind, Config
 import yaml
 
-from function_data import block_names
-
 c_file_path = '/home/luna/src/barobo/c-to-blocks/example.c'
 save_path = '/home/luna/Downloads'
 
@@ -26,6 +24,8 @@ tu = index.parse(c_file_path)
 class Block(ET.Element):
     with open('./block_args.yaml', 'r') as file:
         args = yaml.safe_load(file)
+    with open('./method_blocks.yaml', 'r') as file:
+        methods = yaml.safe_load(file)
 
     # *args is list of strings and blocks
     # TODO: typecheck *args and check if string or block matches with field or value
@@ -33,7 +33,7 @@ class Block(ET.Element):
         block_info = Block.args.get(str_block_type)
 
         if not block_info:
-            raise ValueError(f"Block type '{str_block_type}' not found.")
+            raise ValueError(f"Block type '{str_block_type}' could not be found in block_args.yaml.")
         if len(args) != len(block_info):
             raise TypeError(f"'{str_block_type}'() takes {len(block_info)} argument{'s' if len(block_info) > 1 else ''}, but recieved {len(args)}.")
 
@@ -73,13 +73,13 @@ class Block(ET.Element):
         if cursor_kind_map.get(node.kind):
             return cursor_kind_map.get(node.kind)(node)
                     
-        return None
+        raise NotImplementedError(f"Node type {node.kind} is not supported.")
 
     def build_function_decl(node):
         if node.spelling != 'main':
-            raise NotImplementedError(f'Could not build function \"{node.spelling}\". Need to implement adding functions other than main')
+            raise NotImplementedError(f"Could not build function \"{node.spelling}\". Need to implement adding functions other than main.")
         
-        main = Block('text_comment', 'Generated with Luna\'s C-to-RoboBlocky transpiler v0.1')
+        main = Block('text_comment', "Generated with Luna\'s C-to-RoboBlocky transpiler v0.1")
 
         for child in node.get_children():
             if child.kind == CursorKind.COMPOUND_STMT:
@@ -105,25 +105,29 @@ class Block(ET.Element):
 
     def build_expression(node):
         """Creates block from expression node"""
-        args = []
         block_type = None
+        args = []
 
         # TODO: make the token not hard coded
         for child in node.get_children():
             tokens = list(child.get_tokens())
+            method_name = None
+
             if child.kind == CursorKind.MEMBER_REF_EXPR:
-                block_data = block_names[tokens[2].spelling]
-                block_type = block_data.type
-                if block_data.dropdown: args.append(tokens[2].spelling)
-                print(f"Method called: {tokens[2].spelling}")
+                method_name = tokens[2].spelling
             elif child.kind == CursorKind.UNEXPOSED_EXPR:
-                block_data = block_names[tokens[0].spelling]
-                block_type = block_data.type
-                if block_data.dropdown:
-                    args.append(tokens[0].spelling)
-                print(f"Method called: {tokens[0].spelling}")
+                method_name = tokens[0].spelling
             else:
                 args.append(Block.from_node(child))    
+
+            if method_name is not None:
+                if not Block.methods.get(method_name):
+                    raise ValueError(f"Method \"{method_name}\" could not be found in method_blocks.yaml.")
+                method_data = Block.methods.get(method_name)
+                block_type = method_data['block_type']
+
+                if method_data['dropdown']: args.append(method_name)
+                print(f"Method called: {method_name}")
 
         return Block(block_type, *args)
 

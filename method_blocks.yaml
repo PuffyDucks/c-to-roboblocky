@@ -1,0 +1,6 @@
+line:
+    block_type: "draw_line"
+    dropdown: true
+
+randInt:
+    block_type: "math_random_int"
