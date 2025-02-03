@@ -1,6 +1,6 @@
 # ADD:
-# loops
-# color
+# for loops
+# color, hard code a function to check for valid string or color returning method 
 # strings
 # if statements
 # functions
@@ -108,13 +108,12 @@ class Block(ET.Element):
         block_type = None
         args = []
 
-        # TODO: make the token not hard coded
         for child in node.get_children():
             tokens = list(child.get_tokens())
             method_name = None
 
             if child.kind == CursorKind.MEMBER_REF_EXPR:
-                method_name = tokens[2].spelling
+                method_name = tokens[len(tokens) - 1].spelling
             elif child.kind == CursorKind.UNEXPOSED_EXPR:
                 method_name = tokens[0].spelling
             else:
