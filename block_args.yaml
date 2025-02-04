@@ -59,13 +59,137 @@ array_split_with_type:
 math_number:
   NUM: "field"
 
+math_absolute:
+  NUM: "value"
+
 math_single:
   OP: "field"
   NUM: "value"
 
+math_trig:
+  OP: "field"
+  NUM: "value"
+
+math_convert:
+  OP: "field"
+  NUM: "value"
+
+math_number_property:
+  PROPERTY: "field"
+  NUM: "NUMBER_TO_CHECK"
+
+math_round:
+  OP: "field"
+  NUM: "value"
+
+math_round_decimal_digits:
+  number: "field"
+  NUM: "value"
+
+math_constrain:
+  VALUE: "value"
+  LOW: "value"
+  HIGH: "value"
+
 math_random_int:
   FROM: "value"
   TO: "value"
+
+math_random_double:
+  FROM: "value"
+  TO: "value"
+
+math_random_float: {}
+
+math_random_fraction:
+  NUMER: "field"
+  DENOM: "value"
+
+math_power:
+  A: "value"
+  B: "value"
+
+math_stats_function:
+  FUNC: "field"
+  VAR: "field"
+
+math_array_sort:
+  VAR2: "field"
+  VAR: "field"
+
+math_single_numeric:
+  OP: "field"
+  NUM: "value"
+
+math_multiple_numeric:
+  FUNC: "field"
+  NUM0: "value"
+  NUM1: "value"
+
+math_probability:
+  OP: "field"
+  NUM1: "value"
+  NUM2: "value"
+
+# TODO: add mutations
+math_geometry:
+  TYPE: "field"
+  VALUE_1: "value"
+  VALUE_2: "value"
+  VALUE_3: "value"
+  VALUE_4: "value"
+
+# TODO: add mutations
+math_midpoint:
+  TYPE: "field"
+  VAR_1: "field"
+  VAR_2: "field"
+  VALUE_1: "value"
+  VALUE_2: "value"
+  VALUE_3: "value"
+  VALUE_4: "value"
+
+# TODO: add mutations
+math_fit:
+  TYPE: "field"
+  VAR_1: "field"
+  VAR_2: "field"
+  VAR_3: "field"
+  VAR_4: "field"
+
+# TODO: add mutations
+math_linsolve:
+  TYPE: "field"
+  VAR_1: "field"
+  VAR_2: "field"
+  VALUE_1: "value"
+  VALUE_2: "value"
+  VALUE_3: "value"
+  VALUE_4: "value"
+
+# TODO: add mutations
+math_triangle:
+  TYPE: "field"
+  VAR_1: "field"
+  VAR_2: "field"
+  VAR_3: "field"
+  VAR_4: "field"
+  VALUE_1: "value"
+  VALUE_2: "value"
+  VALUE_3: "value"
+  VALUE_4: "value"
+  VALUE_5: "value"
+  VALUE_6: "value"
+
+# TODO: add mutations
+math_perpendicular:
+  TYPE: "field"
+  VAR_1: "field"
+  VAR_2: "field"
+  VALUE_1: "value"
+  VALUE_2: "value"
+  VALUE_3: "value"
+  VALUE_4: "value"
 
 # drawing
 
