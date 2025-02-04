@@ -1,6 +1,44 @@
-line:
-    block_type: "draw_line"
-    dropdown: true
+# math
+
+abs:
+  block_type: "math_absolute"
+
+sqrt:
+  block_type: "math_single"
+  dropdown: "square root"
+
+cbrt:
+  block_type: "math_single"
+  dropdown: "cubic root"
+
+log:
+  block_type: "math_single"
+  dropdown: "ln"
+
+log2:
+  block_type: "math_single"
+  dropdown: "log2"
+
+log10:
+  block_type: "math_single"
+  dropdown: "log10"
+
+exp:
+  block_type: "math_single"
+  dropdown: "e^"
+
+pow:
+  block_type: "math_single"
+  dropdown: "10^"
+
+factorial:
+  block_type: "math_single"
+  dropdown: "factorial"
 
 randInt:
-    block_type: "math_random_int"
+  block_type: "math_random_int"
+
+
+line:
+    block_type: "draw_line"
+    dropdown: "line"
