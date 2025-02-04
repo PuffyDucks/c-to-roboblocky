@@ -1,9 +1,11 @@
 # ADD:
 # for loops
-# color, hard code a function to check for valid string or color returning method 
-# strings
 # if statements
 # functions
+# color, hard code a function to check for valid string or color returning method 
+# strings
+# hex/binary
+# math constants
 # arrays
 # lists
 # results
@@ -107,26 +109,32 @@ class Block(ET.Element):
         """Creates block from expression node"""
         block_type = None
         args = []
+        children = list(node.get_children())
 
-        for child in node.get_children():
-            tokens = list(child.get_tokens())
+        first_child = children[0]
+        tokens = list(first_child.get_tokens())
+        if first_child.kind == CursorKind.MEMBER_REF_EXPR:
+            method_name = tokens[2].spelling
+        elif first_child.kind == CursorKind.UNEXPOSED_EXPR:
+            method_name = tokens[0].spelling
+        else:
+            raise TypeError(f"Method name could not be found in node type {children[0].kind}")
+
+        if not method_name:
+            raise TypeError(f"Method name could not be found")
+
+        if not Block.methods.get(method_name):
+            raise ValueError(f"Method \"{method_name}\" could not be found in method_blocks.yaml.")
+        
+        method_data = Block.methods.get(method_name)
+        block_type = method_data['block_type']
+
+        if 'dropdown' in method_data: args.append(method_data['dropdown'])
+        print(f"Method called: {method_name}")
+
+        for child in children[1:]:
             method_name = None
-
-            if child.kind == CursorKind.MEMBER_REF_EXPR:
-                method_name = tokens[len(tokens) - 1].spelling
-            elif child.kind == CursorKind.UNEXPOSED_EXPR:
-                method_name = tokens[0].spelling
-            else:
-                args.append(Block.from_node(child))    
-
-            if method_name is not None:
-                if not Block.methods.get(method_name):
-                    raise ValueError(f"Method \"{method_name}\" could not be found in method_blocks.yaml.")
-                method_data = Block.methods.get(method_name)
-                block_type = method_data['block_type']
-
-                if method_data['dropdown']: args.append(method_name)
-                print(f"Method called: {method_name}")
+            args.append(Block.from_node(child))
 
         return Block(block_type, *args)
 
