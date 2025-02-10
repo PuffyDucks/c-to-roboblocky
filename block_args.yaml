@@ -193,22 +193,54 @@ math_perpendicular:
 
 # drawing
 
-colour_picker:
-  COLOUR: "field"
+draw_reset_sequence: {}
+
+draw_background_color:
+  color: "value"
+
+draw_background_image:
+  image: "field"
+
+draw_clear_grid: {}
+
+draw_stroke_color:
+  color: "value"
+
+draw_stroke_width:
+  width: "value"
+
+draw_no_stroke: {}
 
 draw_fill:
   TYPE: "field"
   VALUE_1: "value"
 
-draw_stroke_color:
-  color: "value"
+draw_opacity:
+  opacity: "value"
+
+draw_no_fill: {}
 
 draw_line_style:
   style: "field"
 
-draw_polygon:
-  VARX: "field"
-  VARY: "field"
+draw_delay:
+  time: "value"
+
+draw_grid:
+  grid: "field"
+
+draw_text:
+  TYPE: "field"
+  align: "field"
+  string: "field"
+  x: "value"
+  y: "value"
+  angle: "value"
+
+draw_point:
+  TYPE: "field"
+  VALUE_1: "value"
+  VALUE_2: "value"
 
 draw_line:
   TYPE: "field"
@@ -216,6 +248,168 @@ draw_line:
   VALUE_2: "value"
   VALUE_3: "value"
   VALUE_4: "value"
+
+draw_arrow:
+  TYPE: "field"
+  VALUE_1: "value"
+  VALUE_2: "value"
+  VALUE_3: "value"
+  VALUE_4: "value"
+
+draw_circle:
+  x: "value"
+  y: "value"
+  radius: "value"
+
+draw_point_circle:
+  type: "field"
+  x: "value"
+  y: "value"
+
+draw_rectangle:
+  x: "value"
+  y: "value"
+  width: "value"
+  height: "value"
+
+draw_triangle:
+  x1: "value"
+  y1: "value"
+  x2: "value"
+  y2: "value"
+  x3: "value"
+  y3: "value"
+
+# TODO: add mutations
+draw_triangle_special:
+  TYPE: "field"
+  VALUE_1: "value"
+  VALUE_2: "value"
+  VALUE_3: "value"
+  VALUE_4: "value"
+  VALUE_5: "value"
+  VALUE_6: "value"
+
+draw_star:
+  x: "value"
+  y: "value"
+  length: "value"
+  angle: "value"
+
+draw_quad:
+  x1: "value"
+  y1: "value"
+  x2: "value"
+  y2: "value"
+  x3: "value"
+  y3: "value"
+  x4: "value"
+  y4: "value"
+
+draw_regular:
+  x: "value"
+  y: "value"
+  n: "value"
+  length: "value"
+  angle: "value"
+
+# TODO: add mutations
+draw_arc:
+  TYPE: "field"
+  VALUE_1: "value"
+  VALUE_2: "value"
+  VALUE_3: "value"
+  VALUE_4: "value"
+  VALUE_5: "value"
+
+# TODO: add mutations
+draw_ellipse:
+  TYPE: "field"
+  VALUE_1: "value"
+  VALUE_2: "value"
+  VALUE_3: "value"
+  VALUE_4: "value"
+  VALUE_5: "value"
+
+draw_bezier:
+  x1: "value"
+  y1: "value"
+  cx1: "value"
+  cy1: "value"
+  cx2: "value"
+  cy2: "value"
+  x2: "value"
+  y2: "value"
+
+draw_legend:
+  TYPE: "field"
+  text: "field"
+
+draw_expr:
+  TYPE: "field"
+  VALUE_1: "value"
+  VALUE_2: "value"
+  VALUE_3: "value"
+  VALUE_4: "field"
+
+draw_plot:
+  TYPE: "field"
+  VARX: "field"
+  VARY: "field"
+
+draw_polygon:
+  VARX: "field"
+  VARY: "field"
+
+# TODO: add mutations
+draw_perpendicular:
+  TYPE: "field"
+  VALUE_1: "value"
+  VALUE_2: "value"
+  VALUE_3: "value"
+  VALUE_4: "value"
+
+draw_table:
+  x: "value"
+  y: "value"
+  width: "value"
+  height: "value"
+  row: "value"
+  column: "value"
+
+draw_table_array:
+  VAR_ROW: "field"
+  VAR_COLUMN: "field"
+  x: "value"
+  y: "value"
+
+draw_grid_label:
+  axes: "field"
+
+draw_axis_label:
+  axis: "field"
+  status: "field"
+
+draw_gridline:
+  axis: "field"
+  status: "field"
+
+draw_label:
+  axis: "field"
+  string: "field"
+
+draw_axis_range:
+  AXIS: "field"
+  MIN: "value"
+  MAX: "value"
+
+draw_hash_range:
+  AXIS: "field"
+  STEP: "value"
+
+draw_tics_range:
+  AXIS: "field"
+  STEP: "value"
 
 # text
 

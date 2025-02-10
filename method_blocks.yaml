@@ -38,7 +38,147 @@ factorial:
 randInt:
   block_type: "math_random_int"
 
+# drawinge
+# TODO: missing the dropdown options 
 
-line:
-    block_type: "draw_line"
-    dropdown: "line"
+randcolor:  
+  block_type: "colour_random"
+
+rgb2hex:  
+  block_type: "colour_rgb"
+
+backgroundColor:  
+  block_type: "draw_background_color"
+
+backgroundImage:  
+  block_type: "draw_background_image"
+
+clearGrid:  
+  block_type: "draw_clear_grid"
+
+strokeColor:  
+  block_type: "draw_stroke_color"
+
+strokeWidth:  
+  block_type: "draw_stroke_width"
+
+noStrokeColor:  
+  block_type: "draw_no_stroke"
+
+fillColor:  
+  block_type: "draw_fill"
+  dropdown: "fillColor"
+
+fillOpacity:  
+  block_type: "draw_opacity"
+
+noFill:  
+  block_type: "draw_no_fill"
+
+lineStyle:  
+  block_type: "draw_line_style"
+
+delaySeconds:  
+  block_type: "draw_delay"
+
+grid:  
+  block_type: "draw_grid"
+
+text:  
+  block_type: "draw_text"
+  dropdown: "text"
+
+point:  
+  block_type: "draw_point"
+  dropdown: "point"
+
+line:  
+  block_type: "draw_line"
+  dropdown: "line"
+
+arrow:  
+  block_type: "draw_arrow"
+  dropdown: "arrow"
+
+circle:  
+  block_type: "draw_circle"
+
+circleOpen:  
+  block_type: "draw_point_circle"
+  dropdown: "circleOpen"
+
+circleClosed:  
+  block_type: "draw_point_circle"
+  dropdown: "circleClosed"
+
+rectangle:  
+  block_type: "draw_rectangle"
+
+triangle:  
+  block_type: "draw_triangle"
+
+triangleSSS:  
+  block_type: "draw_triangle_special"
+
+star:  
+  block_type: "draw_star"
+
+quad:  
+  block_type: "draw_quad"
+
+regularPolygon:  
+  block_type: "draw_regular"
+
+arc:  
+  block_type: "draw_arc"
+  dropdown: "arc"
+
+ellipse:  
+  block_type: "draw_ellipse"
+  dropdown: "ellipse"
+
+bezier:  
+  block_type: "draw_bezier"
+
+legend:  
+  block_type: "draw_legend"
+  dropdown: "legend"
+
+expr:  
+  block_type: "draw_expr"
+  dropdown: "expr"
+
+scatter:  
+  block_type: "draw_plot"
+  dropdown: "scatter"
+
+polygon:  
+  block_type: "draw_polygon"
+
+perpendicularLinesi:  
+  block_type: "draw_perpendicular"
+  dropdown: "perpendicularLinesi"
+
+table:  
+  block_type: "draw_table"
+
+tableArray:  
+  block_type: "draw_table_array"
+
+label:  
+  block_type: "draw_label"
+
+axisRange:  
+  block_type: "draw_axis_range"
+
+hashRange:  
+  block_type: "draw_hash_range"
+
+ticsRange:  
+  block_type: "draw_tics_range"
+
+sizeRatio:  
+  block_type: ""
+
+plotting:  
+  block_type: ""

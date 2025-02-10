@@ -111,6 +111,7 @@ class Block(ET.Element):
         args = []
         children = list(node.get_children())
 
+        # get method spelling
         first_child = children[0]
         tokens = list(first_child.get_tokens())
         if first_child.kind == CursorKind.MEMBER_REF_EXPR:
@@ -126,6 +127,7 @@ class Block(ET.Element):
         if not Block.methods.get(method_name):
             raise ValueError(f"Method \"{method_name}\" could not be found in method_blocks.yaml.")
         
+        # create and add args
         method_data = Block.methods.get(method_name)
         block_type = method_data['block_type']
 
