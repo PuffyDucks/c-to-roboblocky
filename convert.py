@@ -1,17 +1,16 @@
 # ADD:
-# for loops
-# if statements
-# functions
+## if statements
+## functions
 # color, hard code a function to check for valid string or color returning method 
 # strings
 # hex/binary
 # math constants
-# arrays
+## arrays
 # lists
 # results
 # prompts
 # error checking for +=
-# mod, ++ --
+# mod, ++, --, ? altho im not sure if ? even works in roboblocky
 import xml.etree.ElementTree as ET
 from clang.cindex import Index, CursorKind, Config
 import yaml
@@ -69,7 +68,8 @@ class Block(ET.Element):
             CursorKind.BINARY_OPERATOR: Block.build_binary_operator,
             CursorKind.INTEGER_LITERAL: Block.build_number_literal,
             CursorKind.FLOATING_LITERAL: Block.build_number_literal,
-            CursorKind.WHILE_STMT: Block.build_while_stmt
+            CursorKind.WHILE_STMT: Block.build_while_stmt,
+            CursorKind.FOR_STMT: Block.build_for_stmt
         }
 
         if cursor_kind_map.get(node.kind):
@@ -81,7 +81,7 @@ class Block(ET.Element):
         if node.spelling != 'main':
             raise NotImplementedError(f"Could not build function \"{node.spelling}\". Need to implement adding functions other than main.")
         
-        main = Block('text_comment', "Generated with Luna\'s C-to-RoboBlocky transpiler v0.1")
+        main = Block('text_comment', "Generated with Luna\'s C-to-RoboBlocky transpiler v0.3")
 
         for child in node.get_children():
             if child.kind == CursorKind.COMPOUND_STMT:
@@ -182,6 +182,61 @@ class Block(ET.Element):
         children = [Block.from_node(child) for child in node.get_children()]
         return Block('controls_whileUntil', 'WHILE', children[0], children[1])
     
+    def build_for_stmt(node):
+        """Creates block from for statement node. Somewhat hard-coded to fit RoboBlocky limitations."""
+        children = list(node.get_children())
+        if len(children) < 4: raise ValueError(f"RoboBlocky for loops require 3 expressions but {len(children) - 1} were found.")
+
+        init_node, cond_node, inc_node = children[0], children[1], children[2]
+        var_name = from_block = to_block = by_block = None
+
+        # initilization
+        if init_node.kind == CursorKind.DECL_STMT:
+            var_decl_node = list(init_node.get_children())[0]
+            init_value_node = list(var_decl_node.get_children())[0]
+            var_name = var_decl_node.spelling
+            from_block = Block.from_node(init_value_node)
+        elif init_node.kind == CursorKind.BINARY_OPERATOR and init_node.spelling == '=':
+            init_children = list(init_node.get_children())
+            var_name = init_children[0].spelling
+            from_block = Block.from_node(init_children[1])
+        else:
+            raise ValueError("RoboBlocky for loop 1st statement only supports variable initialization (e.g. `j = 4`, `int i = 0`).")
+        
+        # conditional
+        if cond_node.kind == CursorKind.BINARY_OPERATOR and cond_node.spelling in ['>', '>=', '<', '<=']:
+            cond_children = list(cond_node.get_children())
+            if cond_children[0].kind == CursorKind.UNEXPOSED_EXPR and cond_children[0].spelling == var_name:
+                to_block = Block.from_node(cond_children[1])
+            elif cond_children[1].kind == CursorKind.UNEXPOSED_EXPR and cond_children[1].spelling == var_name:
+                to_block = Block.from_node(cond_children[0])
+            else:
+                raise ValueError(f"RoboBlocky requires initialized variable {var_name} to be present in for loop conditional.")
+        else:
+            raise ValueError("RoboBlocky for loop 2nd statement only supports comparison operators '>', '>=', '<', and '<='.")
+
+        # increment
+        if inc_node.kind == CursorKind.UNARY_OPERATOR:
+            operator = list(inc_node.get_tokens())[1]
+            if not (operator.spelling == '++' or operator.spelling == '--'):
+                raise ValueError("RoboBlocky for loop 3rd statement only supports variable incrementing/decrementing.")
+            child = list(inc_node.get_children())[0]
+            if child.spelling != var_name:
+                raise ValueError(f"RoboBlocky requires initialized variable {var_name} to be present in for loop increment.")
+            
+            by_block = Block('math_number', '1')
+        elif inc_node.kind == CursorKind.COMPOUND_ASSIGNMENT_OPERATOR and inc_node.spelling in ['+=', '-=']:
+            inc_children = list(inc_node.get_children())
+            if inc_children[0].spelling != var_name:
+                raise ValueError(f"RoboBlocky requires initialized variable {var_name} to be present in for loop increment.")
+            
+            by_block = Block.from_node(inc_children[1])
+        else:
+            raise ValueError("RoboBlocky for loop 3rd statement only supports variable incrementing/decrementing.")
+
+        do_block = Block.from_node(children[3])
+        return Block('controls_for', var_name, from_block, to_block, by_block, do_block)
+
     def build_decl_ref_expr(node):
         referenced = node.referenced
         if referenced.kind == CursorKind.VAR_DECL:

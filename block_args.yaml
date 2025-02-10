@@ -5,6 +5,13 @@ controls_whileUntil:
   BOOL: "value"
   DO: "statement"
 
+controls_for:
+  VAR: "field"
+  FROM: "value"
+  TO: "value"
+  BY: "value"
+  DO: "statement"
+
 # unary operators
 logic_negate:
   BOOL: "value"
