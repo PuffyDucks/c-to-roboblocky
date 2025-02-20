@@ -1,9 +1,7 @@
 # ADD:
-## if statements
 ## functions
 # color, hard code a function to check for valid string or color returning method 
 # strings
-# hex/binary
 # math constants
 ## arrays
 # lists
@@ -199,9 +197,27 @@ class Block(ET.Element):
         pass
 
     def build_number_literal(node):
-        """Creates block from integer or floating literal node"""
+        """Creates block from integer or floating literal node.
+        
+        Decimal: returns math_number block
+        Binary: returns math_binary block
+        Hexadecimal: returns math_hex block
+        Octal: converts to decimal, throws a warning, and returns math_number block
+        """
         tokens = list(node.get_tokens())
-        return Block('math_number', tokens[0].spelling)
+        spelling = tokens[0].spelling
+        block_type = "math_number"
+        if spelling.lower().startswith("0x"): 
+            block_type = "math_hex"
+            spelling = spelling[2:]
+        elif spelling.lower().startswith("0b"): 
+            block_type = "math_binary"
+            spelling = spelling[2:]
+        elif spelling.startswith("0") and spelling != "0": 
+            octal = spelling
+            spelling = str(int(octal, 8))
+            print(f"WARNING: Octal value {octal} converted to decimal value {spelling}")
+        return Block(block_type, spelling)
 
     def build_while_stmt(node):
         """Creates block from while statement node"""

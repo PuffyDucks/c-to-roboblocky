@@ -70,6 +70,12 @@ array_split_with_type:
 math_number:
   NUM: "field"
 
+math_hex:
+  HEX: "field"
+
+math_binary:
+  BIN: "field"
+
 math_absolute:
   NUM: "value"
 

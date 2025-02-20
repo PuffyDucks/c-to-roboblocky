@@ -25,6 +25,13 @@ int main() {
             foo = 200;
         }
     }
+    int h = 0xE5;
+    int b = 0b110001001;
+    int H = 0X93;
+    int B = 0b101;
+    int o = 012;
+    int O = 0;
+    int i = 200;
 }
 
 /*
