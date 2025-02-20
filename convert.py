@@ -53,7 +53,7 @@ class Block(ET.Element):
             arg_element = ET.SubElement(self, arg_type, name=arg_name)
             if arg_type == 'field':
                 arg_element.text = str(arg_value)
-            else:
+            elif arg_value is not None:
                 arg_element.append(arg_value)
     
     @staticmethod
@@ -64,6 +64,7 @@ class Block(ET.Element):
             CursorKind.FUNCTION_DECL: Block.build_function_decl,
             
             CursorKind.COMPOUND_STMT: Block.build_compound_stmt,
+            CursorKind.NULL_STMT: Block.build_null_stmt,
             CursorKind.PAREN_EXPR: Block.build_paren_expr,
             CursorKind.CALL_EXPR: Block.build_expression,
             CursorKind.DECL_REF_EXPR: Block.build_decl_ref_expr,
@@ -114,6 +115,12 @@ class Block(ET.Element):
         if top is not None:
             top.stack_bottom = bottom
         return top
+
+    def build_null_stmt(node):
+        """
+        Returns None.
+        """
+        return None
 
     def build_paren_expr(node):
         """Creates block from paranthesis expression node.
