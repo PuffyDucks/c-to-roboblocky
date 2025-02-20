@@ -36,6 +36,10 @@ logic_operation:
   A: "value"
   B: "value"
 
+# conditionals
+controls_if:
+  _: "mutation"
+
 # variables
 
 variables_create_with_type:

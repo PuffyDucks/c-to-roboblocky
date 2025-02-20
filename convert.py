@@ -17,10 +17,7 @@ import yaml
 
 c_file_path = '/home/luna/src/barobo/c-to-blocks/example.c'
 save_path = '/home/luna/Downloads'
-
 Config.set_library_file('/usr/lib64/libclang.so.19.1.5')
-index = Index.create()
-tu = index.parse(c_file_path)
 
 class Block(ET.Element):
     with open('./block_args.yaml', 'r') as file:
@@ -28,23 +25,33 @@ class Block(ET.Element):
     with open('./method_blocks.yaml', 'r') as file:
         methods = yaml.safe_load(file)
 
-    # *args is list of strings and blocks
     # TODO: typecheck *args and check if string or block matches with field or value
-    def __init__(self, str_block_type, *args):
-        block_info = Block.args.get(str_block_type)
+    def __init__(self, block_type: str, *args):
+        """
+        Build block from str block_type and *args. *args is list of strings for fields and blocks for values.
+        """
+        block_info = Block.args.get(block_type)
+
+        # block_info modifications with mutations 
+        if block_type == "controls_if":
+            block_info = Block.create_if_info(args[0])
 
         if not block_info:
-            raise ValueError(f"Block type '{str_block_type}' could not be found in block_args.yaml.")
+            raise ValueError(f"Block type '{block_type}' could not be found in block_args.yaml.")
         if len(args) != len(block_info):
-            raise TypeError(f"'{str_block_type}'() takes {len(block_info)} argument{'s' if len(block_info) > 1 else ''}, but recieved {len(args)}.")
+            raise TypeError(f"'{block_type}'() takes {len(block_info)} argument{'s' if len(block_info) > 1 else ''}, but recieved {len(args)}.")
 
         # create xml element of type 'block'
-        super().__init__('block', type=str_block_type)
+        super().__init__('block', type=block_type)
         self.stack_bottom = self
         
         for (arg_name, arg_type), arg_value in zip(block_info.items(), args):
+            if arg_type == 'mutation': 
+                self.append(arg_value)
+                continue
+            
             arg_element = ET.SubElement(self, arg_type, name=arg_name)
-            if arg_type == "field":
+            if arg_type == 'field':
                 arg_element.text = str(arg_value)
             else:
                 arg_element.append(arg_value)
@@ -68,8 +75,10 @@ class Block(ET.Element):
             CursorKind.BINARY_OPERATOR: Block.build_binary_operator,
             CursorKind.INTEGER_LITERAL: Block.build_number_literal,
             CursorKind.FLOATING_LITERAL: Block.build_number_literal,
+
             CursorKind.WHILE_STMT: Block.build_while_stmt,
-            CursorKind.FOR_STMT: Block.build_for_stmt
+            CursorKind.FOR_STMT: Block.build_for_stmt,
+            CursorKind.IF_STMT: Block.build_if_stmt
         }
 
         if cursor_kind_map.get(node.kind):
@@ -90,6 +99,10 @@ class Block(ET.Element):
         return main
       
     def build_compound_stmt(node):
+        """Creates block from compound statement node. 
+        
+        Each child node is converted to a block and stacked together. Returns the  
+        top block, with top.stack_bottom set to the bottom block."""
         top = None
         bottom = None
 
@@ -98,10 +111,14 @@ class Block(ET.Element):
             if top is None: top = new_block
             bottom = bottom.attach(new_block) if bottom is not None else new_block.stack_bottom
         
-        top.stack_bottom = bottom
+        if top is not None:
+            top.stack_bottom = bottom
         return top
 
     def build_paren_expr(node):
+        """Creates block from paranthesis expression node.
+        
+        Returns first child of node as block."""
         child = list(node.get_children())[0]
         return Block.from_node(child)
 
@@ -161,7 +178,6 @@ class Block(ET.Element):
         if node.spelling == '=':
             children = list(node.get_children())
             return Block('variables_set', children[0].spelling, Block.from_node(children[1]))
-        
         operands = [Block.from_node(operand) for operand in node.get_children()]
 
         if node.spelling in arithmetic_map:
@@ -171,6 +187,9 @@ class Block(ET.Element):
         elif node.spelling in logical_map:
             return Block('logic_operation', logical_map[node.spelling], operands[0], operands[1])
         raise NotImplementedError(f"Binary operator {node.spelling} is not supported.")
+
+    def build_compound_assignment_operator(node):
+        pass
 
     def build_number_literal(node):
         """Creates block from integer or floating literal node"""
@@ -183,7 +202,9 @@ class Block(ET.Element):
         return Block('controls_whileUntil', 'WHILE', children[0], children[1])
     
     def build_for_stmt(node):
-        """Creates block from for statement node. Somewhat hard-coded to fit RoboBlocky limitations."""
+        """Creates block from for statement node. 
+        
+        C syntax format is hard-coded to fit RoboBlocky limitations."""
         children = list(node.get_children())
         if len(children) < 4: raise ValueError(f"RoboBlocky for loops require 3 expressions but {len(children) - 1} were found.")
 
@@ -204,6 +225,7 @@ class Block(ET.Element):
             raise ValueError("RoboBlocky for loop 1st statement only supports variable initialization (e.g. `j = 4`, `int i = 0`).")
         
         # conditional
+        # TODO: adjustments for < vs <= and etc
         if cond_node.kind == CursorKind.BINARY_OPERATOR and cond_node.spelling in ['>', '>=', '<', '<=']:
             cond_children = list(cond_node.get_children())
             if cond_children[0].kind == CursorKind.UNEXPOSED_EXPR and cond_children[0].spelling == var_name:
@@ -237,7 +259,62 @@ class Block(ET.Element):
         do_block = Block.from_node(children[3])
         return Block('controls_for', var_name, from_block, to_block, by_block, do_block)
 
+    def build_if_stmt(node): 
+        """
+        Creates block from if statement node.
+        
+        Special case with non-fixed field and value count. Iterates though node to calculate
+        number of elseif and else statements needed in mutation XML element. 
+
+        Example args for 3 else ifs and 1 else:
+        [mutation, condition0, compound0, condition1, compound1, condition2, compound2, compound3]
+        """
+        counts = {'elseif': 0, 'else': 0}
+        args = []
+        Block.recursive_build_if_stmt(node, counts, args)
+        mutation = ET.Element("mutation", {"elseif": str(counts['elseif']), "else": str(counts['else'])})
+        return Block('controls_if', mutation, *args)
+
+    def recursive_build_if_stmt(node, counts, args):
+        """
+        Recursively creates blocks from children of if statement node. Keeps track of elseif and 
+        else statements needed. Appends conditional block, compound block, and else if or else blocks. 
+        """
+        children = list(node.get_children())
+        conditional, compound_stmt = children[0], children[1]
+        args.append(Block.from_node(conditional))
+        args.append(Block.from_node(compound_stmt))
+
+        # recursively builds additional else/elseif statements
+        if len(children) == 2: return
+        if children[2].kind == CursorKind.IF_STMT:
+            counts['elseif'] += 1
+            Block.recursive_build_if_stmt(children[2], counts, args)
+        else: 
+            counts['else'] = 1
+            args.append(Block.from_node(children[2]))
+
+    def create_if_info(mutation):
+        """
+        Creates block_info dict for if block arguments from mutation XML element. 
+        """
+        block_info = { '_' : "mutation", 'IF0': 'value', 'DO0': 'statement'}
+        else_if_count = int(mutation.get("elseif"))
+        else_count = int(mutation.get("else"))
+        for i in range(else_if_count):
+            block_info[f'IF{i+1}'] = 'value'
+            block_info[f'DO{i+1}'] = 'statement'
+        if (else_count > 0):
+            block_info['ELSE'] = 'statement'
+        return block_info
+
     def build_decl_ref_expr(node):
+        """
+        Creates variable reference block from declare reference expression node. 
+
+        Due to RoboBlocky limitations, only references to variables are supported - otherwise
+        an error will be thrown. 
+        """
         referenced = node.referenced
         if referenced.kind == CursorKind.VAR_DECL:
             return Block('variables_get', referenced.spelling)
@@ -249,7 +326,11 @@ class Block(ET.Element):
         return Block.from_node(child)
 
     def build_var_decl(node):
-        """Creates block from variable declaration node"""
+        """Creates block from variable declaration node.
+        
+        If no initialization, block type will be variables_create_with_type. Otherwise with initialization,
+        block type will be variables_set_with_type. 
+        """
         children = list(node.get_children())
         if children: 
             return Block('variables_set_with_type', node.type.spelling, node.spelling, Block.from_node(children[0]))
@@ -304,10 +385,13 @@ def from_tu(node):
     return root
 
 
-### MAIN ###
-root = from_tu(tu.cursor)
+### MAIN ###    
+if __name__ == "__main__":
+    index = Index.create()
+    tu = index.parse(c_file_path)
+    root = from_tu(tu.cursor)
 
-xml_tree = ET.ElementTree(root)
-ET.indent(xml_tree, space='  ', level=0)
-xml_tree.write(f'{save_path}/convert.xml', encoding='utf-8')
-print(f"XML file generated.")
+    xml_tree = ET.ElementTree(root)
+    ET.indent(xml_tree, space='  ', level=0)
+    xml_tree.write(f'{save_path}/convert.xml', encoding='utf-8')
+    print(f"XML file generated.")

@@ -17,7 +17,13 @@ int main() {
         for (int hamburger = foo + bar + 4; hamburger > bar * 83; hamburger -= sqrt(test)) {
             plot.quad(4, 4-5, 5*2, 4+5-9*5/9, foo + 2, sqrt(5), cbrt(12)/4+5, foo / (bar + foobar) - test);
         }
-        plot.line(4, 4-5, 5*2, 4+5-9*5/9);
+        if (2+2 == 5) {
+            foo = 300;
+        } else if (foo == 300) {
+            foo = 50;
+        } else {
+            foo = 200;
+        }
     }
 }
 
