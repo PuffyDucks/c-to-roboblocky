@@ -7,8 +7,7 @@
 # lists
 # results
 # prompts
-# error checking for +=
-# mod, ++, --, ? altho im not sure if ? even works in roboblocky
+# mod, +=, ++, --, ? altho im not sure if ? even works in roboblocky
 import xml.etree.ElementTree as ET
 from clang.cindex import Index, CursorKind, Config
 import yaml
