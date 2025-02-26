@@ -59,6 +59,7 @@ class Block(ET.Element):
         print(f'{node.kind} {node.spelling}')
         cursor_kind_map = {
             CursorKind.FUNCTION_DECL: Block.build_function_decl,
+            CursorKind.RETURN_STMT: Block.build_return_stmt,
             
             CursorKind.COMPOUND_STMT: Block.build_compound_stmt,
             CursorKind.NULL_STMT: Block.build_null_stmt,
@@ -85,17 +86,38 @@ class Block(ET.Element):
         raise NotImplementedError(f"Node type {node.kind} is not supported.")
 
     def build_function_decl(node):
-        if node.spelling != 'main':
-            raise NotImplementedError(f"Could not build function \"{node.spelling}\". Need to implement adding functions other than main.")
+        # Generate the main function without a function block 
+        if node.spelling == 'main':
+            main_stack = Block('text_comment', "Generated with Luna\'s C-to-RoboBlocky transpiler v0.3")        
+            for child in node.get_children():
+                if child.kind == CursorKind.COMPOUND_STMT:
+                    main_stack.attach(Block.from_node(child))
+            return main_stack
         
-        main = Block('text_comment', "Generated with Luna\'s C-to-RoboBlocky transpiler v0.3")
-
+        # Other functions
+        parameters = []
+        statement = None
         for child in node.get_children():
-            if child.kind == CursorKind.COMPOUND_STMT:
-                main.attach(Block.from_node(child))
+            if child.kind == CursorKind.PARM_DECL:
+                parameters.append(child.spelling)
+            elif child.kind == CursorKind.COMPOUND_STMT:
+                statement = Block.from_node(child)
+                
+        mutation = ET.Element("mutation")
+        for parameter in parameters:
+            ET.SubElement(mutation, "arg", name=parameter)
 
-        return main
-      
+        if node.type.spelling == 'void': 
+            return Block('procedures_defnoreturn', mutation, node.spelling, statement)
+        else: 
+            return Block('procedures_defreturn', mutation, node.spelling, statement)
+        
+    def build_return_stmt(node):
+        child = list(node.get_children())[0]
+        return_val = Block.from_node(child)
+        true_block = Block('logic_boolean', 'TRUE')
+        return Block('procedures_ifreturn', true_block, return_val)
+
     def build_compound_stmt(node):
         """Creates block from compound statement node. 
         
@@ -205,14 +227,14 @@ class Block(ET.Element):
         """
         tokens = list(node.get_tokens())
         spelling = tokens[0].spelling
-        block_type = "math_number"
+        block_type = 'math_number'
         if spelling.lower().startswith("0x"): 
-            block_type = "math_hex"
+            block_type = 'math_hex'
             spelling = spelling[2:]
         elif spelling.lower().startswith("0b"): 
-            block_type = "math_binary"
+            block_type = 'math_binary'
             spelling = spelling[2:]
-        elif spelling.startswith("0") and spelling != "0": 
+        elif spelling.startswith('0') and spelling != '0': 
             octal = spelling
             spelling = str(int(octal, 8))
             print(f"WARNING: Octal value {octal} converted to decimal value {spelling}")
@@ -334,11 +356,11 @@ class Block(ET.Element):
         """
         Creates variable reference block from declare reference expression node. 
 
-        Due to RoboBlocky limitations, only references to variables are supported - otherwise
-        an error will be thrown. 
+        Due to RoboBlocky limitations, only references to variables and parameters 
+        are supported - otherwise an error will be thrown. 
         """
         referenced = node.referenced
-        if referenced.kind == CursorKind.VAR_DECL:
+        if referenced.kind == CursorKind.VAR_DECL or referenced.kind == CursorKind.PARM_DECL:
             return Block('variables_get', referenced.spelling)
         else:
             raise NotImplementedError(f"Declaration to {referenced.kind} is not supported.")

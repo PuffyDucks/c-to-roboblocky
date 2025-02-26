@@ -37,6 +37,9 @@ logic_operation:
   B: "value"
 
 # conditionals
+logic_boolean:
+  BOOL: "field"
+
 controls_if:
   _: "mutation"
 
@@ -64,6 +67,22 @@ array_split_with_type:
   TYPE: "field"
   VAR: "field"
   TEXT: "field"
+
+# functions
+
+procedures_defnoreturn:
+  _: "mutation"
+  NAME: "field"
+  STACK: "statement"  
+
+procedures_defreturn:
+  _: "mutation"
+  NAME: "field"
+  STACK: "statement"
+
+procedures_ifreturn:
+  CONDITION: "value"
+  VALUE: "value"
 
 # math
 
