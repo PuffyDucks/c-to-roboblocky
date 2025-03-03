@@ -40,4 +40,4 @@ else return 2;
 - **INVALID:** `for (int i = 0; i < 3; i *= 3) {...}`
 
 ## Other
-- Need to add support for operators ++, --, +=, -=, etc
+- RoboBlocky cannot utilize the return value of variable assignment or unary operators ++ and -- 

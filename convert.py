@@ -6,7 +6,7 @@
 # results
 # prompts
 # fix pow
-# ++ and ? altho im not sure if ? even works in roboblocky
+# ? altho im not sure if ? even works in roboblocky
 import xml.etree.ElementTree as ET
 from clang.cindex import Index, CursorKind, Config
 import yaml
@@ -230,15 +230,30 @@ class Block(ET.Element):
         return block_info
 
     def build_unary_operator(node):
-        token = list(node.get_tokens())[0]
+        tokens = list(node.get_tokens())
+        operator = tokens[0].spelling
         child = list(node.get_children())[0]
 
-        # TODO: use math_change to implement ++, --, +=, -=
-        if token.spelling == '!':
+        if operator not in ['!', '-', '++', '--']:
+            # check 2nd token 
+            if tokens[1].spelling in ['++', '--']: 
+                operator = tokens[1].spelling
+            else: 
+                raise NotImplementedError(f"Unary operator {operator} is not supported.")
+
+        if operator == '!':
             return Block('logic_negate', Block.from_node(child))
-        elif token.spelling == '-':
+        elif operator == '-':
             return Block('math_negative', Block.from_node(child))
-        raise NotImplementedError(f"Unary operator {token.spelling} is not supported.")
+        
+        var_name = child.spelling
+        var_block = Block('variables_get', var_name)
+        int_block = Block('math_number', 1)
+        if operator == '++': 
+            operation_block = Block('math_arithmetic', 'ADD', var_block, int_block) 
+        elif operator == '--': 
+            operation_block = Block('math_arithmetic', 'MINUS', var_block, int_block) 
+        return Block('variables_set', var_name, operation_block)
 
     def build_binary_operator(node):
         '''
