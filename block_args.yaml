@@ -87,7 +87,7 @@ procedures_ifreturn:
 procedures_callreturn:
   _: "mutation"
 
-# math
+### MATH ###
 
 math_number:
   NUM: "field"
@@ -97,6 +97,10 @@ math_hex:
 
 math_binary:
   BIN: "field"
+
+math_modulo:
+  DIVIDEND: "value"
+  DIVISOR: "value"
 
 math_absolute:
   NUM: "value"

@@ -1,11 +1,11 @@
 # ADD:
 # fix math blocks with mutations
 # color, hard code a function to check for valid string or color returning method 
-# text blocks
 ## arrays
 # lists
 # results
 # prompts
+# fix pow
 # mod, +=, ++, --, ? altho im not sure if ? even works in roboblocky
 import xml.etree.ElementTree as ET
 from clang.cindex import Index, CursorKind, Config
@@ -246,20 +246,23 @@ class Block(ET.Element):
         arithmetic_map = {'+': 'ADD', '-': 'MINUS', '*': 'MULTIPLY', '/': 'DIVIDE'}
         comparison_map = {'==': 'EQ', '!=': 'NEQ', '<': 'LT', '<=': 'LTE', '>': 'GT', '>=': 'GTE'}
         logical_map = {'&&': 'AND', '||': 'OR'}
-
+        operator = node.spelling
         # variable assignment
-        if node.spelling == '=':
+        if operator == '=':
             children = list(node.get_children())
             return Block('variables_set', children[0].spelling, Block.from_node(children[1]))
-        operands = [Block.from_node(operand) for operand in node.get_children()]
 
-        if node.spelling in arithmetic_map:
-            return Block('math_arithmetic', arithmetic_map[node.spelling], operands[0], operands[1])
-        elif node.spelling in comparison_map:
-            return Block('logic_compare', comparison_map[node.spelling], operands[0], operands[1])
-        elif node.spelling in logical_map:
-            return Block('logic_operation', logical_map[node.spelling], operands[0], operands[1])
-        raise NotImplementedError(f"Binary operator {node.spelling} is not supported.")
+
+        operands = [Block.from_node(operand) for operand in node.get_children()]
+        if operator == '%':
+            return Block('math_modulo', operands[0], operands[1])
+        if operator in arithmetic_map:
+            return Block('math_arithmetic', arithmetic_map[operator], operands[0], operands[1])
+        elif operator in comparison_map:
+            return Block('logic_compare', comparison_map[operator], operands[0], operands[1])
+        elif operator in logical_map:
+            return Block('logic_operation', logical_map[operator], operands[0], operands[1])
+        raise NotImplementedError(f"Binary operator {operator} is not supported.")
 
     def build_compound_assignment_operator(node):
         pass
