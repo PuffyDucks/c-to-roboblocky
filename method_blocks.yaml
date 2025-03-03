@@ -45,11 +45,12 @@ PI:
 E:
   block_type: "math_constant"
   dropdown: "E"
-  
+
 INFINITY:
   block_type: "math_constant"
   dropdown: "INFINITY"
-# drawinge
+
+# drawing
 # TODO: missing the dropdown options 
 
 randcolor:  

@@ -233,7 +233,12 @@ math_perpendicular:
   VALUE_3: "value"
   VALUE_4: "value"
 
-# drawing
+### TEXT ###
+
+text:
+  TEXT: "field"
+
+### DRAWING ### 
 
 draw_reset_sequence: {}
 
@@ -273,8 +278,8 @@ draw_grid:
 
 draw_text:
   TYPE: "field"
+  string: "value"
   align: "field"
-  string: "field"
   x: "value"
   y: "value"
   angle: "value"

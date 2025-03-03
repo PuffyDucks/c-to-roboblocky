@@ -1,6 +1,7 @@
 # ADD:
+# fix math blocks with mutations
 # color, hard code a function to check for valid string or color returning method 
-# strings
+# text blocks
 ## arrays
 # lists
 # results
@@ -21,7 +22,6 @@ class Block(ET.Element):
         methods = yaml.safe_load(file)
     declared_functions = {}
 
-    # TODO: typecheck *args and check if string or block matches with field or value
     def __init__(self, block_type: str, *args):
         '''
         Build block from str block_type and *args. *args is list of strings for fields and blocks for values.
@@ -43,6 +43,7 @@ class Block(ET.Element):
         super().__init__('block', type=block_type)
         self.stack_bottom = self
         
+        # add args to xml element from block_info and args
         for (arg_name, arg_type), arg_value in zip(block_info.items(), args):
             if arg_type == 'mutation': 
                 self.append(arg_value)
@@ -50,13 +51,22 @@ class Block(ET.Element):
             
             arg_element = ET.SubElement(self, arg_type, name=arg_name)
             if arg_type == 'field':
+                # ensure arg_vaule is not non-string block. extract text if string block
+                if isinstance(arg_value, ET.Element):
+                    string_value = arg_value.find(".//field[@name='TEXT']")
+                    if string_value is not None: arg_value = string_value.text
+                    else: raise TypeError(f"Non-string block was passed into argument {arg_name} for block {block_type}.")
                 arg_element.text = str(arg_value)
             elif arg_value is not None:
+                # ensure arg_vaule is block
+                if not isinstance(arg_value, ET.Element): raise TypeError(f"Block was not passed into argument {arg_name} for block {block_type}.")
                 arg_element.append(arg_value)
     
     @staticmethod
     def from_node(node):
-        '''Builds and returns block from ast node.'''
+        '''
+        Builds and returns block from ast node.
+        '''
         print(f'{node.kind} {node.spelling}')
         cursor_kind_map = {
             CursorKind.FUNCTION_DECL: Block.build_function_decl,
@@ -75,6 +85,7 @@ class Block(ET.Element):
             CursorKind.BINARY_OPERATOR: Block.build_binary_operator,
             CursorKind.INTEGER_LITERAL: Block.build_number_literal,
             CursorKind.FLOATING_LITERAL: Block.build_number_literal,
+            CursorKind.STRING_LITERAL: Block.build_string_literal,
 
             CursorKind.WHILE_STMT: Block.build_while_stmt,
             CursorKind.FOR_STMT: Block.build_for_stmt,
@@ -131,10 +142,12 @@ class Block(ET.Element):
         return Block('procedures_ifreturn', true_block, return_val)
 
     def build_compound_stmt(node):
-        '''Creates block from compound statement node. 
+        '''
+        Creates block from compound statement node. 
         
         Each child node is converted to a block and stacked together. Returns the  
-        top block, with top.stack_bottom set to the bottom block.'''
+        top block, with top.stack_bottom set to the bottom block.
+        '''
         top = None
         bottom = None
 
@@ -154,14 +167,18 @@ class Block(ET.Element):
         return None
 
     def build_paren_expr(node):
-        '''Creates block from paranthesis expression node.
+        '''
+        Creates block from paranthesis expression node.
         
-        Returns first child of node as block.'''
+        Returns first child of node as block.
+        '''
         child = list(node.get_children())[0]
         return Block.from_node(child)
 
     def build_call_expr(node):
-        '''Creates block from expression node'''
+        '''
+        Creates block from expression node
+        '''
         block_type = None
         method_name = None
         args = []
@@ -223,7 +240,9 @@ class Block(ET.Element):
         raise NotImplementedError(f"Unary operator {token.spelling} is not supported.")
 
     def build_binary_operator(node):
-        '''Creates block from binary operator node'''
+        '''
+        Creates block from binary operator node
+        '''
         arithmetic_map = {'+': 'ADD', '-': 'MINUS', '*': 'MULTIPLY', '/': 'DIVIDE'}
         comparison_map = {'==': 'EQ', '!=': 'NEQ', '<': 'LT', '<=': 'LTE', '>': 'GT', '>=': 'GTE'}
         logical_map = {'&&': 'AND', '||': 'OR'}
@@ -246,7 +265,8 @@ class Block(ET.Element):
         pass
 
     def build_number_literal(node):
-        '''Creates block from integer or floating literal node.
+        '''
+        Creates block from integer or floating literal node.
         
         Decimal: returns math_number block
         Binary: returns math_binary block
@@ -267,16 +287,28 @@ class Block(ET.Element):
             spelling = str(int(octal, 8))
             print(f"WARNING: Octal value {octal} converted to decimal value {spelling}")
         return Block(block_type, spelling)
+    
+    def build_string_literal(node):
+        '''
+        Creates block string literal node.
+        '''
+        tokens = list(node.get_tokens())
+        spelling = tokens[0].spelling.strip('"')
+        return Block("text", spelling)
 
     def build_while_stmt(node):
-        '''Creates block from while statement node'''
+        '''
+        Creates block from while statement node
+        '''
         children = [Block.from_node(child) for child in node.get_children()]
         return Block('controls_whileUntil', 'WHILE', children[0], children[1])
     
     def build_for_stmt(node):
-        '''Creates block from for statement node. 
+        '''
+        Creates block from for statement node. 
         
-        C syntax format is hard-coded to fit RoboBlocky limitations.'''
+        C syntax format is hard-coded to fit RoboBlocky limitations.
+        '''
         children = list(node.get_children())
         if len(children) < 4: raise ValueError(f"RoboBlocky for loops require 3 expressions but {len(children) - 1} were found.")
 
@@ -398,7 +430,8 @@ class Block(ET.Element):
         return Block.from_node(child)
 
     def build_var_decl(node):
-        '''Creates block from variable declaration node.
+        '''
+        Creates block from variable declaration node.
         
         If no initialization, block type will be variables_create_with_type. Otherwise with initialization,
         block type will be variables_set_with_type. 

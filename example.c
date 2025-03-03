@@ -27,6 +27,9 @@ int main() {
         for (int idx = foo + bar + 4; idx > bar * 83; idx -= sqrt(test)) {
             plot.quad(4, 4-5, 5*2, 4+5-9*5/9, foo + 2, sqrt(5), cbrt(12)/4+5, foo / (bar + foobar) - idx);
         }
+        for (int angle = 0; angle < 360; angle += 30) {
+            plot.text("ABCD", "center", 5, 5, angle);
+        }
         if (isGreater(abs(-3), 1)) {
             foo = 300;
         } else if (foo == 300) {
