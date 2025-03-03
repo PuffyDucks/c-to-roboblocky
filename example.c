@@ -5,19 +5,26 @@ clang -Xclang -ast-dump -fsyntax-only example.c
 
 CPlot plot;
 
+int isGreater(int a, int b) {
+    if (a > b) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
 int main() {
-
-    int a = 3 + 19;
-    double foo, bar, foobar = a, test = 9;
+    int a = 2;
+    double foo, bar, foobar = a, test = isGreater(2, 1);
     foo = foo + 1;
-
-    bar = ((1==3) && (3>=5));
-    while(!(-4 < 1+0)) {
+    
+    bar = ((1==012) && (3>=0xE5));
+    while(!(-4 < 1+0b101)) {
         plot.line(sqrt(cbrt(abs(-2))), 4+5, 5-2, 4*5/9-5*9);
         for (int hamburger = foo + bar + 4; hamburger > bar * 83; hamburger -= sqrt(test)) {
             plot.quad(4, 4-5, 5*2, 4+5-9*5/9, foo + 2, sqrt(5), cbrt(12)/4+5, foo / (bar + foobar) - test);
         }
-        if (2+2 == 5) {
+        if (isGreater(abs(-3), 1)) {
             foo = 300;
         } else if (foo == 300) {
             foo = 50;
@@ -25,13 +32,6 @@ int main() {
             foo = 200;
         }
     }
-    int h = 0xE5;
-    int b = 0b110001001;
-    int H = 0X93;
-    int B = 0b101;
-    int o = 012;
-    int O = 0;
-    int i = 200;
 }
 
 /*

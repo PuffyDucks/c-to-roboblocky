@@ -84,6 +84,9 @@ procedures_ifreturn:
   CONDITION: "value"
   VALUE: "value"
 
+procedures_callreturn:
+  _: "mutation"
+
 # math
 
 math_number:

@@ -21,17 +21,20 @@ class Block(ET.Element):
         args = yaml.safe_load(file)
     with open('./method_blocks.yaml', 'r') as file:
         methods = yaml.safe_load(file)
+    declared_functions = {}
 
     # TODO: typecheck *args and check if string or block matches with field or value
     def __init__(self, block_type: str, *args):
-        """
+        '''
         Build block from str block_type and *args. *args is list of strings for fields and blocks for values.
-        """
+        '''
         block_info = Block.args.get(block_type)
 
         # block_info modifications with mutations 
-        if block_type == "controls_if":
+        if block_type == 'controls_if':
             block_info = Block.create_if_info(args[0])
+        elif block_type == 'procedures_callreturn':
+            block_info = Block.create_func_info(args[0])
 
         if not block_info:
             raise ValueError(f"Block type '{block_type}' could not be found in block_args.yaml.")
@@ -55,7 +58,7 @@ class Block(ET.Element):
     
     @staticmethod
     def from_node(node):
-        """Builds and returns block from ast node."""
+        '''Builds and returns block from ast node.'''
         print(f'{node.kind} {node.spelling}')
         cursor_kind_map = {
             CursorKind.FUNCTION_DECL: Block.build_function_decl,
@@ -64,7 +67,7 @@ class Block(ET.Element):
             CursorKind.COMPOUND_STMT: Block.build_compound_stmt,
             CursorKind.NULL_STMT: Block.build_null_stmt,
             CursorKind.PAREN_EXPR: Block.build_paren_expr,
-            CursorKind.CALL_EXPR: Block.build_expression,
+            CursorKind.CALL_EXPR: Block.build_call_expr,
             CursorKind.DECL_REF_EXPR: Block.build_decl_ref_expr,
             CursorKind.UNEXPOSED_EXPR: Block.build_unexposed_expr,
 
@@ -86,9 +89,19 @@ class Block(ET.Element):
         raise NotImplementedError(f"Node type {node.kind} is not supported.")
 
     def build_function_decl(node):
+        '''
+        Creates block from function declaration node. 
+        
+        If function is main, returns only the blocks from the compound statement 
+        are returned. Otherwise, the blocks are returned as a function block. 
+
+        Non-main functions are added to the `declared_functions` static dictionary,
+        as a name:args pair.
+        '''
+        func_name = node.spelling
         # Generate the main function without a function block 
-        if node.spelling == 'main':
-            main_stack = Block('text_comment', "Generated with Luna\'s C-to-RoboBlocky transpiler v0.3")        
+        if func_name == 'main':
+            main_stack = Block('text_comment', "Generated with Luna\'s C-to-RoboBlocky transpiler v0.5")        
             for child in node.get_children():
                 if child.kind == CursorKind.COMPOUND_STMT:
                     main_stack.attach(Block.from_node(child))
@@ -107,10 +120,11 @@ class Block(ET.Element):
         for parameter in parameters:
             ET.SubElement(mutation, "arg", name=parameter)
 
+        Block.declared_functions[func_name] = parameters
         if node.type.spelling == 'void': 
-            return Block('procedures_defnoreturn', mutation, node.spelling, statement)
+            return Block('procedures_defnoreturn', mutation, func_name, statement)
         else: 
-            return Block('procedures_defreturn', mutation, node.spelling, statement)
+            return Block('procedures_defreturn', mutation, func_name, statement)
         
     def build_return_stmt(node):
         child = list(node.get_children())[0]
@@ -119,10 +133,10 @@ class Block(ET.Element):
         return Block('procedures_ifreturn', true_block, return_val)
 
     def build_compound_stmt(node):
-        """Creates block from compound statement node. 
+        '''Creates block from compound statement node. 
         
         Each child node is converted to a block and stacked together. Returns the  
-        top block, with top.stack_bottom set to the bottom block."""
+        top block, with top.stack_bottom set to the bottom block.'''
         top = None
         bottom = None
 
@@ -136,52 +150,68 @@ class Block(ET.Element):
         return top
 
     def build_null_stmt(node):
-        """
+        '''
         Returns None.
-        """
+        '''
         return None
 
     def build_paren_expr(node):
-        """Creates block from paranthesis expression node.
+        '''Creates block from paranthesis expression node.
         
-        Returns first child of node as block."""
+        Returns first child of node as block.'''
         child = list(node.get_children())[0]
         return Block.from_node(child)
 
-    def build_expression(node):
-        """Creates block from expression node"""
+    def build_call_expr(node):
+        '''Creates block from expression node'''
         block_type = None
+        method_name = None
         args = []
         children = list(node.get_children())
 
         # get method spelling
         first_child = children[0]
         tokens = list(first_child.get_tokens())
-        if first_child.kind == CursorKind.MEMBER_REF_EXPR:
-            method_name = tokens[2].spelling
-        elif first_child.kind == CursorKind.UNEXPOSED_EXPR:
+        if first_child.kind == CursorKind.UNEXPOSED_EXPR:
             method_name = tokens[0].spelling
+        elif first_child.kind == CursorKind.MEMBER_REF_EXPR:
+            # For RoboBlocky methods that use a class
+            method_name = tokens[2].spelling
         else:
-            raise TypeError(f"Method name could not be found in node type {children[0].kind}")
-
-        if not method_name:
-            raise TypeError(f"Method name could not be found")
-
-        if not Block.methods.get(method_name):
-            raise ValueError(f"Method \"{method_name}\" could not be found in method_blocks.yaml.")
+            raise TypeError(f"Method name could not be found in node type {children[0].kind}.")
         
+        if Block.methods.get(method_name):
+            # Method built into RoboBlocky
+            method_data = Block.methods.get(method_name)
+            block_type = method_data['block_type']
+            if 'dropdown' in method_data: args.append(method_data['dropdown'])
+            print(f"RoboBlocky method called: {method_name}")
+        elif Block.declared_functions.get(method_name):
+            # Calling user defined function
+            block_type = 'procedures_callreturn'
+            # mutation block listing function args
+            mutation = ET.Element("mutation", name=method_name)
+            for function_arg in Block.declared_functions[method_name]:
+                ET.SubElement(mutation, "arg", name=function_arg)
+            args.append(mutation)
+        else:
+            raise ValueError(f"Could not find method or function {method_name}().")
+
         # create and add args
-        method_data = Block.methods.get(method_name)
-        block_type = method_data['block_type']
-
-        if 'dropdown' in method_data: args.append(method_data['dropdown'])
-        print(f"Method called: {method_name}")
-
         for child in children[1:]:
-            method_name = None
             args.append(Block.from_node(child))
 
         return Block(block_type, *args)
+
+    def create_func_info(mutation):
+        '''
+        Creates block_info dict for function call block arguments from 
+        mutation XML element. 
+        '''
+        block_info = { '_' : "mutation"}
+        for i in range(len(mutation)):
+            block_info[f'ARG{i}'] = 'value'
+        return block_info
 
     def build_unary_operator(node):
         token = list(node.get_tokens())[0]
@@ -195,7 +225,7 @@ class Block(ET.Element):
         raise NotImplementedError(f"Unary operator {token.spelling} is not supported.")
 
     def build_binary_operator(node):
-        """Creates block from binary operator node"""
+        '''Creates block from binary operator node'''
         arithmetic_map = {'+': 'ADD', '-': 'MINUS', '*': 'MULTIPLY', '/': 'DIVIDE'}
         comparison_map = {'==': 'EQ', '!=': 'NEQ', '<': 'LT', '<=': 'LTE', '>': 'GT', '>=': 'GTE'}
         logical_map = {'&&': 'AND', '||': 'OR'}
@@ -218,13 +248,13 @@ class Block(ET.Element):
         pass
 
     def build_number_literal(node):
-        """Creates block from integer or floating literal node.
+        '''Creates block from integer or floating literal node.
         
         Decimal: returns math_number block
         Binary: returns math_binary block
         Hexadecimal: returns math_hex block
         Octal: converts to decimal, throws a warning, and returns math_number block
-        """
+        '''
         tokens = list(node.get_tokens())
         spelling = tokens[0].spelling
         block_type = 'math_number'
@@ -241,14 +271,14 @@ class Block(ET.Element):
         return Block(block_type, spelling)
 
     def build_while_stmt(node):
-        """Creates block from while statement node"""
+        '''Creates block from while statement node'''
         children = [Block.from_node(child) for child in node.get_children()]
         return Block('controls_whileUntil', 'WHILE', children[0], children[1])
     
     def build_for_stmt(node):
-        """Creates block from for statement node. 
+        '''Creates block from for statement node. 
         
-        C syntax format is hard-coded to fit RoboBlocky limitations."""
+        C syntax format is hard-coded to fit RoboBlocky limitations.'''
         children = list(node.get_children())
         if len(children) < 4: raise ValueError(f"RoboBlocky for loops require 3 expressions but {len(children) - 1} were found.")
 
@@ -304,7 +334,7 @@ class Block(ET.Element):
         return Block('controls_for', var_name, from_block, to_block, by_block, do_block)
 
     def build_if_stmt(node): 
-        """
+        '''
         Creates block from if statement node.
         
         Special case with non-fixed field and value count. Iterates though node to calculate
@@ -312,7 +342,7 @@ class Block(ET.Element):
 
         Example args for 3 else ifs and 1 else:
         [mutation, condition0, compound0, condition1, compound1, condition2, compound2, compound3]
-        """
+        '''
         counts = {'elseif': 0, 'else': 0}
         args = []
         Block.recursive_build_if_stmt(node, counts, args)
@@ -320,10 +350,10 @@ class Block(ET.Element):
         return Block('controls_if', mutation, *args)
 
     def recursive_build_if_stmt(node, counts, args):
-        """
+        '''
         Recursively creates blocks from children of if statement node. Keeps track of elseif and 
         else statements needed. Appends conditional block, compound block, and else if or else blocks. 
-        """
+        '''
         children = list(node.get_children())
         conditional, compound_stmt = children[0], children[1]
         args.append(Block.from_node(conditional))
@@ -339,9 +369,9 @@ class Block(ET.Element):
             args.append(Block.from_node(children[2]))
 
     def create_if_info(mutation):
-        """
+        '''
         Creates block_info dict for if block arguments from mutation XML element. 
-        """
+        '''
         block_info = { '_' : "mutation", 'IF0': 'value', 'DO0': 'statement'}
         else_if_count = int(mutation.get("elseif"))
         else_count = int(mutation.get("else"))
@@ -353,12 +383,12 @@ class Block(ET.Element):
         return block_info
 
     def build_decl_ref_expr(node):
-        """
+        '''
         Creates variable reference block from declare reference expression node. 
 
         Due to RoboBlocky limitations, only references to variables and parameters 
         are supported - otherwise an error will be thrown. 
-        """
+        '''
         referenced = node.referenced
         if referenced.kind == CursorKind.VAR_DECL or referenced.kind == CursorKind.PARM_DECL:
             return Block('variables_get', referenced.spelling)
@@ -370,11 +400,11 @@ class Block(ET.Element):
         return Block.from_node(child)
 
     def build_var_decl(node):
-        """Creates block from variable declaration node.
+        '''Creates block from variable declaration node.
         
         If no initialization, block type will be variables_create_with_type. Otherwise with initialization,
         block type will be variables_set_with_type. 
-        """
+        '''
         children = list(node.get_children())
         if children: 
             return Block('variables_set_with_type', node.type.spelling, node.spelling, Block.from_node(children[0]))
@@ -398,11 +428,11 @@ class Block(ET.Element):
         return top
 
     def attach(self, child_block):
-        """
+        '''
         Appends child block wrapped in 'next' element. Returns bottom block.
 
         In RoboBlocky, attaches the child block directly below the parent block. 
-        """
+        '''
         if child_block is None:
             return self
 
@@ -411,9 +441,9 @@ class Block(ET.Element):
         return child_block.stack_bottom
     
 def from_tu(node):
-    """
+    '''
     Sets up root from tu cursor, and initiates building main function. 
-    """
+    '''
     root = ET.Element('xml', xmlns='http://www.w3.org/1999/xhtml')
 
     for child in node.get_children():
