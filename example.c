@@ -17,6 +17,9 @@ int isGreater(int a, int b) {
 }
 
 int main() {
+    plot.fillColor("#66ff99");    
+    plot.backgroundColor("orange");
+    plot.strokeColor(rgb2hex(0x2F, 0b00010001, 198));
     int a = 2;
     double foo, bar, foobar = a, test = isGreater(2, 1);
     foo = foo + 1;
@@ -41,58 +44,3 @@ int main() {
         }
     }
 }
-
-/*
-abs(-2);
-
-sqrt(9);
-
-sin(1.57);
-
-deg2rad(45);
-
-0 % 2 == 0;
-
-round(3.1);
-
-round(0*pow(10, 2))/pow(10, 2);
-
-constrain(5, 1, 10);
-
-randint(1, 100);
-
-randdouble(1, 100);
-
-urand(NULL);
-
-randfrac(x, 10);
-
-pow(2, 3);
-
-mean(var);
-
-sort(var2, var);
-
-divisornum(12);
-
-gcd(6, 12);
-
-permutation(4, 2);
-
-distance(0, 0, 6, 6);
-
-midpoint(0, 0, 6, 6, x, y);
-
-linearfit(x, y, m, b);
-
-linearcorrcoef(x, y);
-
-linsolvesi(2, 4, -0.5, -2, x, y);
-quartiles(a, min, q1, med, q3, max, range, iqr);
-quadratic(1, -5, 6, x1, x2);
-
-polygonperi(x, y);
-
-triangleSSS(4, 5, 30, 8, 7, 5, x2, y2, x3, y3);
-perpendicularLinesi(-2, 3, 2, -4, x, y);
-*/

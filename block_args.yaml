@@ -1,4 +1,4 @@
-# loops
+### LOOPS ###
 
 controls_whileUntil:
   MODE: "field"
@@ -12,14 +12,15 @@ controls_for:
   BY: "value"
   DO: "statement"
 
-# unary operators
+### UNARY OPERATORS ###
+
 logic_negate:
   BOOL: "value"
 
 math_negative:
   NUM: "value"
 
-# binary operators
+### BINARY OPERATORS ###
 
 math_arithmetic:
   OP: "field"
@@ -36,14 +37,14 @@ logic_operation:
   A: "value"
   B: "value"
 
-# conditionals
+### CONDITIONALS ###
 logic_boolean:
   BOOL: "field"
 
 controls_if:
   _: "mutation"
 
-# variables
+### VARIABLES ###
 
 variables_create_with_type:
   type: "field"
@@ -61,14 +62,14 @@ variables_set:
 variables_get:
   VAR: "field"
 
-# arrays
+### ARARYS ###
 
 array_split_with_type:
   TYPE: "field"
   VAR: "field"
   TEXT: "field"
 
-# functions
+### FUNCTIONS ###
 
 procedures_defnoreturn:
   _: "mutation"
@@ -243,6 +244,9 @@ text:
   TEXT: "field"
 
 ### DRAWING ### 
+
+colour_picker:
+  COLOUR: "field"
 
 draw_reset_sequence: {}
 
@@ -433,6 +437,11 @@ draw_table_array:
   VAR_COLUMN: "field"
   x: "value"
   y: "value"
+
+colour_rgb:
+  RED: "value"
+  GREEN: "value"
+  BLUE: "value"
 
 draw_grid_label:
   axes: "field"

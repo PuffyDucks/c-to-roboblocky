@@ -1,6 +1,5 @@
 # ADD:
 # fix math blocks with mutations
-# color, hard code a function to check for valid string or color returning method 
 ## arrays
 # lists
 # results
@@ -212,9 +211,13 @@ class Block(ET.Element):
         else:
             raise ValueError(f"Could not find method or function {method_name}().")
 
+        isColorBlock = block_type in ['draw_background_color', 'draw_stroke_color', 'draw_fill']
         # create and add args
         for child in children[1:]:
-            args.append(Block.from_node(child))
+            # special case for color blocks
+            if isColorBlock and child.kind == CursorKind.STRING_LITERAL: 
+                args.append(Block.build_color_block(child))
+            else: args.append(Block.from_node(child))
 
         return Block(block_type, *args)
 
@@ -288,7 +291,7 @@ class Block(ET.Element):
         operator = node.spelling[0]
 
         arithmetic_map = {'+': 'ADD', '-': 'MINUS', '*': 'MULTIPLY', '/': 'DIVIDE'}
-        if operator not in arithmetic_map and operator is not '%':
+        if operator not in arithmetic_map and operator != '%':
             raise ValueError(f"Bitwise compound assignment operator {operator} is not supported.")
         
         operands = [Block.from_node(operand) for operand in node.get_children()]
@@ -331,6 +334,20 @@ class Block(ET.Element):
         tokens = list(node.get_tokens())
         spelling = tokens[0].spelling.strip('"')
         return Block("text", spelling)
+
+    def build_color_block(node):
+        '''
+        Creates color block from string literal node.
+        '''
+        named_colors = {"red": "#FF0000", "green": "#00FF00", "blue": "#0000FF", 
+                        "cyan": "#00FFFF", "magenta": "#FF00FF", "yellow": "#FFFF00", 
+                        "orange": "#FFA500", "brown": "#A52A2A", 
+                        "white": "#FFFFFF", "black": "#000000"}
+        
+        color = node.spelling.strip('"')
+        if color in named_colors:
+            color = named_colors[color]
+        return Block('colour_picker', color)
 
     def build_while_stmt(node):
         '''
