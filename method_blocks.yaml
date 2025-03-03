@@ -38,6 +38,17 @@ factorial:
 randInt:
   block_type: "math_random_int"
 
+PI:
+  block_type: "math_constant"
+  dropdown: "PI"
+
+E:
+  block_type: "math_constant"
+  dropdown: "E"
+  
+INFINITY:
+  block_type: "math_constant"
+  dropdown: "INFINITY"
 # drawinge
 # TODO: missing the dropdown options 
 

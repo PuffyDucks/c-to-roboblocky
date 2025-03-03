@@ -113,6 +113,9 @@ math_convert:
   OP: "field"
   NUM: "value"
 
+math_constant:
+  CONSTANT: "field"
+
 math_number_property:
   PROPERTY: "field"
   NUM: "NUMBER_TO_CHECK"

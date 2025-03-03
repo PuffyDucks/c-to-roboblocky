@@ -2,6 +2,9 @@
 clang -Xclang -ast-dump -fsyntax-only example.c
  */
 #include <stdbool.h>
+#define M_PI PI()
+#define M_E  E()
+#define Inf  INFINITY()
 
 CPlot plot;
 
@@ -18,11 +21,11 @@ int main() {
     double foo, bar, foobar = a, test = isGreater(2, 1);
     foo = foo + 1;
     
-    bar = ((1==012) && (3>=0xE5));
+    bar = ((1==012) && (M_PI>=0xE5));
     while(!(-4 < 1+0b101)) {
         plot.line(sqrt(cbrt(abs(-2))), 4+5, 5-2, 4*5/9-5*9);
-        for (int hamburger = foo + bar + 4; hamburger > bar * 83; hamburger -= sqrt(test)) {
-            plot.quad(4, 4-5, 5*2, 4+5-9*5/9, foo + 2, sqrt(5), cbrt(12)/4+5, foo / (bar + foobar) - test);
+        for (int idx = foo + bar + 4; idx > bar * 83; idx -= sqrt(test)) {
+            plot.quad(4, 4-5, 5*2, 4+5-9*5/9, foo + 2, sqrt(5), cbrt(12)/4+5, foo / (bar + foobar) - idx);
         }
         if (isGreater(abs(-3), 1)) {
             foo = 300;

@@ -1,8 +1,6 @@
 # ADD:
-## functions
 # color, hard code a function to check for valid string or color returning method 
 # strings
-# math constants
 ## arrays
 # lists
 # results

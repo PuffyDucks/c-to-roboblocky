@@ -8,13 +8,16 @@ pip3 install libclang pyyaml
 Some quirks documented for reference. Most are due to limitations in RoboBlocky.
 
 ## functions
-- The function `main` will not generate a function block. Instead, the statements will be placed directly into RoboBlocky.   
+- The function `main` will not generate a function block. Instead, the statements will be placed directly into RoboBlocky. 
+- Parameter names and variable names across all functions must be unique.
+- Functions cannot be recursive. 
 - Parameter typing is ignored. 
 - Return typing is also ignored _unless_ the return type is `void` - then a block with no return will be used.
 - The return slot on function blocks will always be empty. 
 - Return statements in C are converted into conditional return blocks.
     - These blocks will have the condition set to `true`.
     - e.g. in C: `return 0;` becomes in RoboBlocky: `if (true) return 0;`
+- Function names PI, E, and INFINITY are reserved for constants.
 
 ## if statements
 Works with one liners, e.g.: 
