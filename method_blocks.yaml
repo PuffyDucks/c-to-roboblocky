@@ -28,8 +28,8 @@ exp:
   dropdown: "e^"
 
 pow:
-  block_type: "math_single"
-  dropdown: "10^"
+  block_type: "math_arithmetic"
+  dropdown: "POWER"
 
 factorial:
   block_type: "math_single"

@@ -20,7 +20,7 @@ int main() {
     int a = 2;
     double foo, bar, foobar = a, test = isGreater(2, 1);
     foo = foo + 1;
-    foo *= 1.1003;
+    foo *= pow(1.1003, 2);
     foo--;
 
     bar = ((1==012) && (M_PI>=0xE5));
