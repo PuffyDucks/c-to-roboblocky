@@ -20,7 +20,8 @@ int main() {
     int a = 2;
     double foo, bar, foobar = a, test = isGreater(2, 1);
     foo = foo + 1;
-    
+    foo *= 1.1003;
+
     bar = ((1==012) && (M_PI>=0xE5));
     while(!(-4 < 1+0b101)) {
         plot.line(sqrt(cbrt(abs(-2))), 4+5, 5-2, 4*5/9-5*9);

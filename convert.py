@@ -6,7 +6,7 @@
 # results
 # prompts
 # fix pow
-# mod, +=, ++, --, ? altho im not sure if ? even works in roboblocky
+# ++ and ? altho im not sure if ? even works in roboblocky
 import xml.etree.ElementTree as ET
 from clang.cindex import Index, CursorKind, Config
 import yaml
@@ -81,11 +81,12 @@ class Block(ET.Element):
 
             CursorKind.DECL_STMT: Block.build_decl_stmt,
 
-            CursorKind.UNARY_OPERATOR: Block.build_unary_operator,
-            CursorKind.BINARY_OPERATOR: Block.build_binary_operator,
             CursorKind.INTEGER_LITERAL: Block.build_number_literal,
             CursorKind.FLOATING_LITERAL: Block.build_number_literal,
             CursorKind.STRING_LITERAL: Block.build_string_literal,
+            CursorKind.UNARY_OPERATOR: Block.build_unary_operator,
+            CursorKind.BINARY_OPERATOR: Block.build_binary_operator,
+            CursorKind.COMPOUND_ASSIGNMENT_OPERATOR: Block.build_compound_assignment_operator,
 
             CursorKind.WHILE_STMT: Block.build_while_stmt,
             CursorKind.FOR_STMT: Block.build_for_stmt,
@@ -247,11 +248,11 @@ class Block(ET.Element):
         comparison_map = {'==': 'EQ', '!=': 'NEQ', '<': 'LT', '<=': 'LTE', '>': 'GT', '>=': 'GTE'}
         logical_map = {'&&': 'AND', '||': 'OR'}
         operator = node.spelling
+
         # variable assignment
         if operator == '=':
             children = list(node.get_children())
             return Block('variables_set', children[0].spelling, Block.from_node(children[1]))
-
 
         operands = [Block.from_node(operand) for operand in node.get_children()]
         if operator == '%':
@@ -262,10 +263,28 @@ class Block(ET.Element):
             return Block('logic_compare', comparison_map[operator], operands[0], operands[1])
         elif operator in logical_map:
             return Block('logic_operation', logical_map[operator], operands[0], operands[1])
-        raise NotImplementedError(f"Binary operator {operator} is not supported.")
+        raise ValueError(f"Binary operator {operator} is not supported.")
 
     def build_compound_assignment_operator(node):
-        pass
+        '''
+        Creates block from compound assignment operator node.
+
+        Throws an error for bitwise operators.
+        '''
+        operator = node.spelling[0]
+
+        arithmetic_map = {'+': 'ADD', '-': 'MINUS', '*': 'MULTIPLY', '/': 'DIVIDE'}
+        if operator not in arithmetic_map and operator is not '%':
+            raise ValueError(f"Bitwise compound assignment operator {operator} is not supported.")
+        
+        operands = [Block.from_node(operand) for operand in node.get_children()]
+        if operator == '%':
+            operation_block = Block('math_modulo', operands[0], operands[1])
+        else: 
+            operation_block = Block('math_arithmetic', arithmetic_map[operator], operands[0], operands[1])
+
+        var_name = list(node.get_children())[0].spelling
+        return Block('variables_set', var_name, operation_block)
 
     def build_number_literal(node):
         '''
