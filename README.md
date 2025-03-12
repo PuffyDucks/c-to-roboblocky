@@ -40,4 +40,5 @@ else return 2;
 - **INVALID:** `for (int i = 0; i < 3; i *= 3) {...}`
 
 ## Other
-- RoboBlocky cannot utilize the return value of variable assignment or unary operators ++ and -- 
+- RoboBlocky cannot utilize the return value of variable assignment or unary operators ++ and --
+- array is a reserved keyword

@@ -31,6 +31,8 @@ class Block(ET.Element):
             block_info = Block.create_if_info(args[0])
         elif block_type == 'procedures_callreturn':
             block_info = Block.create_func_info(args[0])
+        elif block_type == 'array_create_type':
+            block_info = Block.create_array_info(args[0])
 
         if not block_info:
             raise ValueError(f"Block type '{block_type}' could not be found in block_args.yaml.")
@@ -76,6 +78,7 @@ class Block(ET.Element):
             CursorKind.CALL_EXPR: Block.build_call_expr,
             CursorKind.DECL_REF_EXPR: Block.build_decl_ref_expr,
             CursorKind.UNEXPOSED_EXPR: Block.build_unexposed_expr,
+            CursorKind.INIT_LIST_EXPR: Block.create_init_list_expr,
 
             CursorKind.DECL_STMT: Block.build_decl_stmt,
 
@@ -489,11 +492,56 @@ class Block(ET.Element):
         If no initialization, block type will be variables_create_with_type. Otherwise with initialization,
         block type will be variables_set_with_type. 
         '''
+        var_type = node.type.spelling
+        var_name = node.spelling
         children = list(node.get_children())
-        if children: 
-            return Block('variables_set_with_type', node.type.spelling, node.spelling, Block.from_node(children[0]))
+        child = children[0] if children else None
+        isNotArray = not var_type.endswith(']')
+        
+        if isNotArray and child is None:
+            # non array declare
+            return Block('variables_create_with_type', var_type, var_name)
+        elif isNotArray:
+            # non array declare and initialize
+            return Block('variables_set_with_type', var_type, var_name, Block.from_node(child))
+        
+        # var type is array
+        def find_init_list(node):
+            # condition to look for
+            if node.kind == CursorKind.INIT_LIST_EXPR:
+                return Block.from_node(node)
+            # recursive search
+            for child in node.get_children():
+                init_blocks = find_init_list(child)
+                if init_blocks is not None:
+                    return init_blocks
+            return None
+        args = find_init_list(node)
+        var_type = var_type.split("[")[0] 
+        
+        if args is None:
+            # array declare 
+            return Block('array_create_with_type', var_type, var_name, Block.from_node(child))
         else: 
-            return Block('variables_create_with_type', node.type.spelling, node.spelling)
+            # array declare and initialize
+            mutation = ET.Element("mutation", {"items": str(len(args))})
+            return Block('array_create_type', mutation, var_type, var_name, *args)
+
+    def create_init_list_expr(node):
+        args = []
+        for child in node.get_children():
+            args.append(Block.from_node(child))
+        return args
+
+    def create_array_info(mutation):
+        '''
+        Creates block_info dict for array_create_type block arguments from mutation XML element. 
+        '''
+        block_info = { '_' : "mutation", "TYPE" : "field", "VAR" : "field"}
+        element_count = int(mutation.get('items'))
+        for i in range(element_count):
+            block_info[f'ADD{i}'] = 'value'
+        return block_info
 
     def build_decl_stmt(node):
         children = list(node.get_children())

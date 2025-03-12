@@ -62,8 +62,18 @@ variables_set:
 variables_get:
   VAR: "field"
 
-### ARARYS ###
+### ARRAYS ###
 
+array_create_with_type:
+  type: "field"
+  VAR: "field"
+  length: "value"
+
+array_create_type:
+  _: "mutation"
+  TYPE: "field"
+  VAR: "field"
+  
 array_split_with_type:
   TYPE: "field"
   VAR: "field"

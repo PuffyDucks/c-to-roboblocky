@@ -5,7 +5,7 @@ index = clang.cindex.Index.create()
 tu = index.parse('/home/luna/src/barobo/c-to-blocks/example.c')
 
 def print_ast(node, indent=0):
-    print(' ' * indent + f'{node.kind} {node.spelling}')
+    print(' ' * indent + f'{node.kind} {node.spelling} {node.type.spelling}')
     for child in node.get_children():
         print_ast(child, indent + 2)
 
