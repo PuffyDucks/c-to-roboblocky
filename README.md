@@ -1,8 +1,15 @@
 # Installing Dependencies
-To install the required dependencies, run the following command:
+### System Dependncies
+ - Clang
+### Python Dependencies
 ```sh
-pip3 install libclang pyyaml
+pip install pyyaml clang
 ```
+# How to Use
+ - Edit `convert.py` and set `Config.set_library_file('')` to your device's path to the clang library
+ - Set the file path to the c file and the directory where the converted file will be saved to 
+ - Run `convert.py`
+ - Note: Many of the methods, such as math and drawing related, are incomplete and need to be added in the yaml files. Some blocks require mutations, which must be done in `convert.py`
 
 # Transpiler Quirks
 Some quirks documented for reference. Most are due to limitations in RoboBlocky.
